@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Color Tokens (dark-only, RGB triplets so Tailwind opacity works) ──── */
+:root {
+  --background: 8 12 26;
+  --foreground: 224 234 240;
+  --card-bg: #0d1328;
+  --card-border: rgba(0, 180, 230, 0.12);
+  --cyan: 0 180 230;
+  --gold: 212 160 48;
+  --crimson: 232 93 74;
+}
+
+html,
+body {
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+  min-height: 100%;
+}
+
+body {
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle cyan-on-navy texture for desktop — keeps mobile flat */
+@media (min-width: 640px) {
+  body {
+    background-color: rgb(var(--background));
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgb(var(--cyan) / 0.04) 1px,
+      transparent 0
+    );
+    background-size: 28px 28px;
+  }
+}
+
+/* ─── Component utilities ────────────────────────────────────────────────── */
+@layer components {
+  .card-surface {
+    @apply rounded-card border;
+    background: var(--card-bg);
+    border-color: var(--card-border);
+  }
+
+  .text-zh {
+    @apply font-chinese;
+  }
+
+  .text-pinyin {
+    @apply italic text-foreground/60;
+  }
+
+  /* Primary CTA — electric cyan */
+  .btn-gold {
+    @apply inline-flex items-center justify-center rounded-card-md px-5 py-3 text-sm font-bold transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50;
+    background-color: rgb(var(--cyan));
+    color: rgb(var(--background));
+  }
+
+  /* Ghost / secondary — cyan outline */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-card-md px-5 py-3 text-sm font-bold transition active:scale-[0.98] disabled:opacity-50;
+    border: 1px solid rgb(var(--cyan) / 0.4);
+    color: rgb(var(--cyan));
+  }
+  .btn-ghost:hover {
+    background-color: rgb(var(--cyan) / 0.1);
+  }
+
+  /* Destructive / retry — red */
+  .btn-crimson {
+    @apply inline-flex items-center justify-center rounded-card-md px-5 py-3 text-sm font-bold transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50;
+    background-color: rgb(var(--crimson));
+    color: #ffffff;
+  }
+}
+
+/* ─── Chinese display mode (controlled via body[data-zh-mode=...]) ─────── */
+/* Uses .text-zh for Chinese characters, .text-pinyin for pinyin. */
+/* english: hide both characters and pinyin */
+body[data-zh-mode="english"] .text-zh,
+body[data-zh-mode="english"] .text-pinyin {
+  display: none !important;
+}
+/* pinyin: hide Chinese characters, keep pinyin */
+body[data-zh-mode="pinyin"] .text-zh {
+  display: none !important;
+}
+/* characters: hide pinyin, keep characters */
+body[data-zh-mode="characters"] .text-pinyin {
+  display: none !important;
+}
+/* full: show everything (default) */
+
+/* ─── Focus indicator ────────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid rgb(var(--cyan));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
