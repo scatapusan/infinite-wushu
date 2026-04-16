@@ -4,13 +4,15 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { ArrowLeft, SwitchCamera } from "lucide-react";
 import type { Technique } from "@/lib/types";
-import type { StanceEvaluation } from "@/lib/pose/types";
+import type { StanceEvaluation, BodyVisibility } from "@/lib/pose/types";
 import { usePoseDetection } from "@/lib/pose/use-pose-detection";
 import { STANCE_ANGLES } from "@/lib/pose/reference-angles";
 import { evaluateStance } from "@/lib/pose/pose-evaluator";
+import { checkBodyVisibility } from "@/lib/pose/angle-utils";
 import { savePracticeAttempt } from "@/lib/pose/practice-storage";
 import CameraView from "@/components/practice/CameraView";
 import FeedbackPanel from "@/components/practice/FeedbackPanel";
+import BodyVisibilityOverlay from "@/components/practice/BodyVisibilityOverlay";
 
 type Props = {
   technique: Technique;
@@ -22,12 +24,23 @@ export default function PracticePage({ technique, lessonId }: Props) {
   const pose = usePoseDetection();
   const config = STANCE_ANGLES[technique.id] ?? null;
   const [evaluation, setEvaluation] = useState<StanceEvaluation | null>(null);
+  const [bodyVisibility, setBodyVisibility] = useState<BodyVisibility | null>(null);
   const startTimeRef = useRef(Date.now());
   const bestScoreRef = useRef(0);
 
-  // Evaluate stance whenever landmarks update
+  // Check body visibility and evaluate stance whenever landmarks update
   useEffect(() => {
-    if (!pose.landmarks || !config) return;
+    if (!pose.landmarks) return;
+
+    const visibility = checkBodyVisibility(pose.landmarks);
+    setBodyVisibility(visibility);
+
+    // Don't evaluate until the full body is in frame
+    if (!visibility.ready || !config) {
+      setEvaluation(null);
+      return;
+    }
+
     const result = evaluateStance(pose.landmarks, config);
     setEvaluation(result);
     if (result.score > bestScoreRef.current) {
@@ -121,6 +134,13 @@ export default function PracticePage({ technique, lessonId }: Props) {
           angleResults={evaluation?.angles ?? null}
           angleConfig={config}
         />
+
+        {/* Body visibility status — top of camera area */}
+        {bodyVisibility && !pose.isLoading && !pose.error && (
+          <div className="absolute left-0 right-0 top-3 z-10 flex justify-center px-3">
+            <BodyVisibilityOverlay visibility={bodyVisibility} />
+          </div>
+        )}
 
         {/* Feedback panel — overlaid at bottom */}
         <div className="absolute bottom-0 left-0 right-0 z-10 p-3 sm:p-4">

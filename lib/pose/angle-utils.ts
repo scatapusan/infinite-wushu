@@ -1,4 +1,4 @@
-import type { PoseLandmark } from "./types";
+import type { PoseLandmark, BodyVisibility } from "./types";
 
 /**
  * Calculate the angle at vertex b formed by points a-b-c, in degrees.
@@ -28,6 +28,25 @@ export function calculateTorsoLean(landmarks: PoseLandmark[]): number {
   const dx = shoulderMid.x - hipMid.x;
   const dy = hipMid.y - shoulderMid.y; // positive = shoulders above hips (normal)
   return Math.abs(Math.atan2(dx, dy) * (180 / Math.PI));
+}
+
+const REQUIRED_LANDMARKS: { name: string; indices: [number, number] }[] = [
+  { name: "Shoulders", indices: [11, 12] },
+  { name: "Hips",      indices: [23, 24] },
+  { name: "Knees",     indices: [25, 26] },
+  { name: "Ankles",    indices: [27, 28] },
+];
+
+const VISIBILITY_THRESHOLD = 0.5;
+
+export function checkBodyVisibility(landmarks: PoseLandmark[]): BodyVisibility {
+  const parts = REQUIRED_LANDMARKS.map(({ name, indices }) => ({
+    name,
+    visible:
+      landmarks[indices[0]]?.visibility >= VISIBILITY_THRESHOLD &&
+      landmarks[indices[1]]?.visibility >= VISIBILITY_THRESHOLD,
+  }));
+  return { ready: parts.every((p) => p.visible), parts };
 }
 
 function midpoint(a: PoseLandmark, b: PoseLandmark): PoseLandmark {

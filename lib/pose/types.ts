@@ -39,6 +39,16 @@ export type StanceEvaluation = {
   overallFeedback: string;
 };
 
+export type BodyPartStatus = {
+  name: string;
+  visible: boolean;
+};
+
+export type BodyVisibility = {
+  ready: boolean;
+  parts: BodyPartStatus[];
+};
+
 export type PracticeAttempt = {
   techniqueId: string;
   score: number;
