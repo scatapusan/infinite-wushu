@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import Header from "@/components/Header";
 import LessonCard from "@/components/LessonCard";
 import { DEMO_MODULES, DEMO_LESSONS } from "@/lib/demo-data";
+import { isCoachModeServer } from "@/lib/coach-mode.server";
 
 export default function DemoModulePage({
   params,
@@ -12,6 +13,8 @@ export default function DemoModulePage({
 }) {
   const mod = DEMO_MODULES.find((m) => m.id === params.moduleId);
   if (!mod) notFound();
+
+  const coachMode = isCoachModeServer();
 
   const lessons = DEMO_LESSONS[params.moduleId] ?? [];
   const completed = lessons.filter((l) => l.derivedStatus === "completed").length;
@@ -81,6 +84,7 @@ export default function DemoModulePage({
                 lesson={l}
                 index={i}
                 basePath="/demo/learn"
+                coachMode={coachMode}
               />
             ))}
           </div>

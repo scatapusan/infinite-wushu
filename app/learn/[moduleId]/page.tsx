@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getModuleWithLessonStatuses } from "@/lib/db";
+import { isCoachModeServer } from "@/lib/coach-mode.server";
 import Header from "@/components/Header";
 import LessonCard from "@/components/LessonCard";
 
@@ -23,6 +24,8 @@ export default async function ModulePage({
   } = await supabase.auth.getUser();
   // Middleware guarantees `user` is set for /learn/*, but satisfy the type system.
   if (!user) notFound();
+
+  const coachMode = isCoachModeServer();
 
   const result = await getModuleWithLessonStatuses(user.id, params.moduleId);
   if (!result) notFound();
@@ -97,6 +100,7 @@ export default async function ModulePage({
                 moduleId={mod.id}
                 lesson={l}
                 index={i}
+                coachMode={coachMode}
               />
             ))}
           </div>

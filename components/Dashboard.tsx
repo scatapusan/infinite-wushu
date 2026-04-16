@@ -11,6 +11,13 @@ import ContinueLearningCard from "@/components/ContinueLearningCard";
 import { DEMO_LESSONS } from "@/lib/demo-data";
 import { applyDemoProgressToModules, getDemoProgress } from "@/lib/demo-progress";
 import { getDueCount } from "@/lib/vocab-progress";
+import { isCoachMode } from "@/lib/coach-mode";
+
+const CATEGORY_CONFIG: Record<string, { label: string; zhLabel?: string; pinyin?: string }> = {
+  Foundation: { label: "Basics" },
+  Forms: { label: "Elementary Routines", zhLabel: "初级套路", pinyin: "Chūjí Tàolù" },
+};
+const CATEGORY_ORDER = ["Foundation", "Forms"];
 
 type Props = {
   modules: ModuleWithProgress[];
@@ -30,6 +37,7 @@ export default function Dashboard({
     Record<string, LessonWithStatus[]>
   >(isDemo ? {} : buildLessonsFromServer(initialModules));
   const [dueCount, setDueCount] = useState(0);
+  const [coachMode, setCoachModeState] = useState(false);
 
   useEffect(() => {
     if (isDemo) {
@@ -60,6 +68,7 @@ export default function Dashboard({
       setLessonsByModule(map);
     }
     setDueCount(getDueCount());
+    setCoachModeState(isCoachMode());
   }, [initialModules, isDemo]);
 
   const totalLessons = modules.reduce((acc, m) => acc + m.totalCount, 0);
@@ -136,19 +145,44 @@ export default function Dashboard({
           {/* Chinese display toggle */}
           <ChineseDisplayToggle />
 
-          {/* Modules grid */}
-          <div>
-            <h2 className="mb-4 text-lg font-bold">Curriculum</h2>
+          {/* Modules grid grouped by category */}
+          <div className="space-y-8">
+            <h2 className="text-lg font-bold">Curriculum</h2>
             {modules.length === 0 ? (
               <div className="card-surface p-8 text-center text-sm text-foreground/50">
                 No modules yet. Check back soon.
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {modules.map((m) => (
-                  <ModuleCard key={m.id} module={m} basePath={basePath} />
-                ))}
-              </div>
+              CATEGORY_ORDER
+                .filter((cat) => modules.some((m) => m.category === cat))
+                .map((cat) => {
+                  const cfg = CATEGORY_CONFIG[cat];
+                  const catModules = modules.filter((m) => m.category === cat);
+                  return (
+                    <div key={cat}>
+                      <div className="mb-4">
+                        <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
+                          {cfg.label}
+                          {cfg.zhLabel && (
+                            <span className="ml-2 font-chinese text-gold/60 normal-case tracking-normal">
+                              {cfg.zhLabel}
+                            </span>
+                          )}
+                        </p>
+                        {cfg.pinyin && (
+                          <p className="mt-0.5 text-xs text-foreground/30">
+                            {cfg.pinyin}
+                          </p>
+                        )}
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {catModules.map((m) => (
+                          <ModuleCard key={m.id} module={m} basePath={basePath} coachMode={coachMode} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
             )}
           </div>
         </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Lock, Play, Check, Circle } from "lucide-react";
+import { Lock, Play, Check, Circle, Star } from "lucide-react";
 import type { LessonWithStatus } from "@/lib/types";
 
 type Props = {
@@ -7,10 +7,18 @@ type Props = {
   lesson: LessonWithStatus;
   index: number;
   basePath?: string;
+  coachMode?: boolean;
 };
 
-export default function LessonCard({ moduleId, lesson, index, basePath = "/learn" }: Props) {
-  const locked = lesson.derivedStatus === "locked";
+export default function LessonCard({
+  moduleId,
+  lesson,
+  index,
+  basePath = "/learn",
+  coachMode = false,
+}: Props) {
+  // In coach mode, locked lessons are treated as available
+  const locked = lesson.derivedStatus === "locked" && !coachMode;
   const completed = lesson.derivedStatus === "completed";
   const inProgress = lesson.derivedStatus === "in_progress";
 
@@ -25,7 +33,7 @@ export default function LessonCard({ moduleId, lesson, index, basePath = "/learn
   );
 
   const statusLabel = locked
-    ? "Locked — complete previous lesson"
+    ? (lesson.prerequisite_label ?? "Locked — complete previous lesson")
     : completed
       ? lesson.quiz_score != null
         ? `Completed · ${Math.round(lesson.quiz_score * 100)}%`
@@ -54,6 +62,21 @@ export default function LessonCard({ moduleId, lesson, index, basePath = "/learn
           <p className="mt-1 line-clamp-2 text-xs text-foreground/50">
             {lesson.description}
           </p>
+        )}
+        {lesson.chinese_level > 0 && (
+          <div className="mt-1.5 flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Star
+                key={n}
+                size={10}
+                className={
+                  n <= lesson.chinese_level
+                    ? "fill-gold text-gold"
+                    : "fill-foreground/10 text-foreground/10"
+                }
+              />
+            ))}
+          </div>
         )}
         <p
           className={`mt-2 text-xs font-semibold ${

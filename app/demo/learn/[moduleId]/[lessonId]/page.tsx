@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, LogIn, ClipboardCheck } from "lucide-react";
+import { ChevronLeft, LogIn, ClipboardCheck, BookOpen } from "lucide-react";
 import Header from "@/components/Header";
 import TechniqueCard from "@/components/TechniqueCard";
 import {
@@ -60,8 +60,17 @@ export default function DemoLessonPage({
 
           {/* Techniques */}
           {techniques.length === 0 ? (
-            <div className="card-surface p-6 text-center text-sm text-foreground/50">
-              No techniques yet for this lesson.
+            <div className="card-surface flex flex-col items-center gap-4 px-6 py-12 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gold/10">
+                <BookOpen size={22} className="text-gold/60" />
+              </div>
+              <div>
+                <p className="font-semibold">Content coming soon</p>
+                <p className="mt-1 max-w-sm text-sm text-foreground/50">
+                  Video tutorials and section-by-section breakdowns for this
+                  form will be added here when ready.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-5">

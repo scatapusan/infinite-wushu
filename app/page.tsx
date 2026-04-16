@@ -2,6 +2,7 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import LandingHero from "@/components/LandingHero";
 import Dashboard from "@/components/Dashboard";
 import { getDashboardData } from "@/lib/db";
+import type { ModuleWithProgress } from "@/lib/types";
 
 // Revalidate on every request — auth state must not be cached.
 export const dynamic = "force-dynamic";
@@ -27,6 +28,12 @@ export default async function HomePage() {
     return <LandingHero />;
   }
 
-  const modules = await getDashboardData(user.id);
+  let modules: ModuleWithProgress[];
+  try {
+    modules = await getDashboardData(user.id);
+  } catch {
+    // DB schema not yet set up — show empty dashboard with a notice.
+    modules = [];
+  }
   return <Dashboard modules={modules} userEmail={user.email ?? ""} />;
 }

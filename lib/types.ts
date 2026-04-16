@@ -64,6 +64,7 @@ export type LessonWithStatus = Lesson & {
   derivedStatus: LessonStatus;
   quiz_score: number | null;
   quiz_attempts: number;
+  prerequisite_label?: string;
 };
 
 export type ModuleWithProgress = Module & {

@@ -1,7 +1,9 @@
-import { Check, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { Check, AlertTriangle, Camera } from "lucide-react";
 import type { Technique } from "@/lib/types";
 import VideoPlayer from "@/components/VideoPlayer";
 import SpeakButton from "@/components/SpeakButton";
+import { PRACTICABLE_IDS } from "@/lib/pose/technique-lookup";
 
 type Props = {
   technique: Technique;
@@ -72,6 +74,17 @@ export default function TechniqueCard({ technique: t }: Props) {
             ))}
           </ul>
         </div>
+      )}
+
+      {/* Practice button — only for stances with pose detection configs */}
+      {PRACTICABLE_IDS.includes(t.id) && (
+        <Link
+          href={`/practice/${t.id}`}
+          className="btn-gold flex w-full items-center justify-center gap-2"
+        >
+          <Camera size={14} />
+          Practice This Stance
+        </Link>
       )}
     </article>
   );

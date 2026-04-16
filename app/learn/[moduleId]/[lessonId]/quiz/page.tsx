@@ -9,6 +9,7 @@ import {
   getNextLessonId,
   getModuleWithLessonStatuses,
 } from "@/lib/db";
+import { isCoachModeServer } from "@/lib/coach-mode.server";
 import Header from "@/components/Header";
 import Quiz from "./Quiz";
 import type { QuizQuestionPublic } from "@/lib/types";
@@ -37,9 +38,12 @@ export default async function QuizPage({
   if (!lesson || !mod || lesson.module_id !== mod.id) notFound();
 
   // Enforce unlock — quizzes for locked lessons should not render.
-  const moduleData = await getModuleWithLessonStatuses(user.id, mod.id);
-  const lessonStatus = moduleData?.lessons.find((l) => l.id === lesson.id);
-  if (!lessonStatus || lessonStatus.derivedStatus === "locked") notFound();
+  // Coaches bypass the lock check so they can preview any quiz.
+  if (!isCoachModeServer()) {
+    const moduleData = await getModuleWithLessonStatuses(user.id, mod.id);
+    const lessonStatus = moduleData?.lessons.find((l) => l.id === lesson.id);
+    if (!lessonStatus || lessonStatus.derivedStatus === "locked") notFound();
+  }
 
   const [questions, nextLesson] = await Promise.all([
     getQuizForLesson(lesson.id),

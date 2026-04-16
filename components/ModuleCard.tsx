@@ -5,9 +5,17 @@ import type { ModuleWithProgress } from "@/lib/types";
 type Props = {
   module: ModuleWithProgress;
   basePath?: string;
+  coachMode?: boolean;
 };
 
-export default function ModuleCard({ module: mod, basePath = "/learn" }: Props) {
+export default function ModuleCard({
+  module: mod,
+  basePath = "/learn",
+  coachMode = false,
+}: Props) {
+  // In coach mode, all modules are unlocked regardless of progress
+  const unlocked = mod.unlocked || coachMode;
+
   const pct =
     mod.totalCount === 0
       ? 0
@@ -16,10 +24,10 @@ export default function ModuleCard({ module: mod, basePath = "/learn" }: Props) 
   const inner = (
     <article
       className={`card-surface relative flex h-full flex-col gap-4 p-5 transition ${
-        mod.unlocked ? "hover:border-cyan/40" : "opacity-50"
+        unlocked ? "hover:border-cyan/40" : "opacity-50"
       }`}
     >
-      {!mod.unlocked && (
+      {!unlocked && (
         <div className="absolute right-4 top-4 text-foreground/50">
           <Lock size={16} />
         </div>
@@ -56,7 +64,7 @@ export default function ModuleCard({ module: mod, basePath = "/learn" }: Props) 
     </article>
   );
 
-  if (!mod.unlocked) {
+  if (!unlocked) {
     return <div>{inner}</div>;
   }
 
