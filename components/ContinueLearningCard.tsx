@@ -47,12 +47,12 @@ export default function ContinueLearningCard({
       href={`${basePath}/${nextModule.id}/${nextLesson.id}`}
       className="card-surface block p-6 transition hover:border-cyan/40"
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-xs uppercase tracking-[0.2em] text-cyan/70">
             Continue learning
           </p>
-          <h2 className="mt-1 truncate text-xl font-bold">
+          <h2 className="mt-1 text-xl font-bold">
             {nextLesson.title_en}
           </h2>
           <p className="mt-1 text-sm">
@@ -65,7 +65,7 @@ export default function ContinueLearningCard({
             {nextModule.title_en}
           </p>
         </div>
-        <div className="btn-gold shrink-0">
+        <div className="btn-gold shrink-0 self-start">
           Resume
           <ArrowRight size={14} className="ml-2" />
         </div>

@@ -50,7 +50,7 @@ export default function Header({ userEmail }: Props) {
           <span className="text-base font-bold tracking-wide text-cyan">
             WuXue
           </span>
-          <span className="text-[10px] font-medium tracking-wider text-foreground/40">
+          <span className="hidden text-[10px] font-medium tracking-wider text-foreground/40 min-[400px]:block">
             by Infinite Wushu
           </span>
         </div>

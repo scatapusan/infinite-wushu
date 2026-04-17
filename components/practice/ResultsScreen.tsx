@@ -115,14 +115,14 @@ export default function ResultsScreen({
         <div className="flex flex-wrap gap-3 justify-center">
           <button
             onClick={onRetry}
-            className="btn-gold inline-flex items-center gap-2 px-5 py-2.5"
+            className="btn-gold inline-flex min-h-11 items-center gap-2 px-5 py-3"
           >
             <RotateCcw size={14} />
             Try again
           </button>
           <Link
             href={backHref}
-            className="btn-ghost inline-flex items-center gap-2 px-5 py-2.5"
+            className="btn-ghost inline-flex min-h-11 items-center gap-2 px-5 py-3"
           >
             Back to lesson
           </Link>

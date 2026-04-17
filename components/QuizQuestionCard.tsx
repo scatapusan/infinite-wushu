@@ -46,7 +46,7 @@ export default function QuizQuestionCard({
             review && isSelected && review.correctIndex !== i;
 
           let cls =
-            "flex w-full items-center gap-3 rounded-card-md border px-4 py-3 text-left text-sm transition ";
+            "flex min-h-11 w-full items-center gap-3 rounded-card-md border px-4 py-3 text-left text-sm transition ";
           if (review) {
             if (isCorrect) {
               cls += "border-cyan/60 bg-cyan/10 text-cyan";

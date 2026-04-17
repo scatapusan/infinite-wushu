@@ -39,7 +39,7 @@ export default function VocabBrowse({ words }: Props) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search Chinese, pinyin, or English…"
+            placeholder="Search"
             className="w-full rounded-card-md border border-white/10 bg-white/[0.02] py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-foreground/30 focus:border-cyan/60 focus:outline-none"
           />
         </div>
