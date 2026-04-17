@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ChevronLeft, Settings } from "lucide-react";
 import Header from "@/components/Header";
 import CoachToggle from "@/components/CoachToggle";
+import QuickModeToggle from "@/components/QuickModeToggle";
+import HandTrackingToggle from "@/components/HandTrackingToggle";
 import { createServerSupabase } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +58,14 @@ export default async function SettingsPage() {
               Coach Mode is stored locally. Sign in to sync your role across
               devices (coming soon).
             </p>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground/50">
+              Practice
+            </h2>
+            <QuickModeToggle />
+            <HandTrackingToggle />
           </div>
         </div>
       </section>

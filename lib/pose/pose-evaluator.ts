@@ -1,112 +1,97 @@
 import type {
   PoseLandmark,
-  StanceAngleConfig,
-  AngleResult,
-  StanceEvaluation,
+  StanceCheckConfig,
+  CheckResult,
+  ViewEvaluation,
+  CameraView,
+  CombinedEvaluation,
 } from "./types";
-import { calculateAngle, calculateTorsoLean } from "./angle-utils";
+import { evaluateCheck } from "./check-evaluators";
 
-const MIN_VISIBILITY = 0.5;
-
-export function evaluateStance(
+/**
+ * Evaluate all checks in a stance config that apply to the given view.
+ * Scoring starts at 100, deducting per failing check.
+ */
+export function evaluateStanceView(
   landmarks: PoseLandmark[],
-  config: StanceAngleConfig,
-): StanceEvaluation {
-  const angles: AngleResult[] = config.angles.map((spec) => {
-    let current: number;
-
-    if (spec.isTorsoLean) {
-      current = calculateTorsoLean(landmarks);
-    } else {
-      const [ai, bi, ci] = spec.landmarks;
-      const a = landmarks[ai];
-      const b = landmarks[bi];
-      const c = landmarks[ci];
-
-      // If any landmark has low visibility, return a neutral result
-      if (
-        a.visibility < MIN_VISIBILITY ||
-        b.visibility < MIN_VISIBILITY ||
-        c.visibility < MIN_VISIBILITY
-      ) {
-        return {
-          label: spec.label,
-          current: spec.target,
-          target: spec.target,
-          tolerance: spec.tolerance,
-          delta: 0,
-          status: "yellow" as const,
-          feedback: "Move so your full body is visible",
-        };
-      }
-
-      current = calculateAngle(a, b, c);
-    }
-
-    const delta = current - spec.target;
-    const absDelta = Math.abs(delta);
-
-    let status: "green" | "yellow" | "red";
-    if (absDelta <= spec.tolerance) {
-      status = "green";
-    } else if (absDelta <= spec.tolerance * 2) {
-      status = "yellow";
-    } else {
-      status = "red";
-    }
-
-    let feedback: string | null = null;
-    if (status !== "green") {
-      feedback = delta < 0 ? spec.feedback_low : spec.feedback_high;
-    }
-
-    return {
-      label: spec.label,
-      current: Math.round(current),
-      target: spec.target,
-      tolerance: spec.tolerance,
-      delta: Math.round(delta),
-      status,
-      feedback,
-    };
-  });
-
-  // Score: each angle contributes equally
-  const score =
-    angles.length === 0
-      ? 0
-      : Math.round(
-          angles.reduce((sum, a) => sum + angleScore(a), 0) / angles.length,
-        );
-
-  const overallFeedback = deriveOverallFeedback(angles, score);
-
-  return { angles, score, overallFeedback };
-}
-
-function angleScore(result: AngleResult): number {
-  const absDelta = Math.abs(result.delta);
-  const tol = result.tolerance;
-
-  if (absDelta <= tol) return 100;
-  if (absDelta <= tol * 2) {
-    // Linear interpolation 100 -> 50
-    return 100 - ((absDelta - tol) / tol) * 50;
-  }
-  // Beyond 2x tolerance: 50 -> 0
-  const maxDelta = tol * 4;
-  if (absDelta >= maxDelta) return 0;
-  return 50 - ((absDelta - tol * 2) / (tol * 2)) * 50;
-}
-
-function deriveOverallFeedback(angles: AngleResult[], score: number): string {
-  if (score >= 90) return "Excellent form! Hold it steady.";
-  if (score >= 70) return "Good — small adjustments needed.";
-
-  // Find the worst angle and use its feedback
-  const worst = angles.reduce(
-    (w, a) => (Math.abs(a.delta) > Math.abs(w.delta) ? a : w),
-    angles[0],
+  config: StanceCheckConfig,
+  view: CameraView,
+  extraChecks: CheckResult[] = [],
+): ViewEvaluation {
+  const applicable = config.checks.filter((c) => c.view === view);
+  const checks: CheckResult[] = applicable.map((c) =>
+    evaluateCheck(c, landmarks),
   );
-  return worst?.feedback ?? "Keep adjusting your stance.";
+  const allResults = [...checks, ...extraChecks];
+
+  const score = computeScore(allResults);
+  const failures = allResults.filter((c) => c.status !== "green");
+  const overallFeedback = deriveOverallFeedback(allResults, score);
+
+  return { view, score, checks: allResults, failures, overallFeedback };
+}
+
+/**
+ * Deduction-based scoring:
+ *   - Start at 100
+ *   - Red + critical: −30
+ *   - Red + major:    −15
+ *   - Red + minor:    −5
+ *   - Yellow + major: −5 (yellow counts as "close")
+ *   - Clamp to [0, 100]
+ */
+export function computeScore(checks: CheckResult[]): number {
+  let score = 100;
+  for (const c of checks) {
+    if (c.status === "red") {
+      if (c.severity === "critical") score -= 30;
+      else if (c.severity === "major") score -= 15;
+      else score -= 5;
+    } else if (c.status === "yellow" && c.severity === "major") {
+      score -= 5;
+    }
+  }
+  return Math.max(0, Math.min(100, score));
+}
+
+function deriveOverallFeedback(checks: CheckResult[], score: number): string {
+  if (checks.length === 0) return "Stand in frame to begin…";
+  const failing = checks.filter((c) => c.status === "red");
+  if (score >= 90 && failing.length === 0)
+    return "Excellent form — hold it steady.";
+  if (score >= 70 && failing.length === 0)
+    return "Good — small adjustments needed.";
+  const worst =
+    failing.find((c) => c.severity === "critical") ??
+    failing.find((c) => c.severity === "major") ??
+    failing[0];
+  return worst?.message ?? "Keep adjusting your stance.";
+}
+
+/** Combine two per-view evaluations into a single result. */
+export function combineViews(
+  techniqueId: string,
+  front: ViewEvaluation | undefined,
+  side: ViewEvaluation | undefined,
+  mode: "quick" | "multi",
+): CombinedEvaluation {
+  const scores = [front?.score, side?.score].filter(
+    (s): s is number => typeof s === "number",
+  );
+  const combinedScore =
+    scores.length === 0
+      ? 0
+      : Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  const verified =
+    mode === "multi" &&
+    (front?.score ?? 0) >= 70 &&
+    (side?.score ?? 0) >= 70;
+  return {
+    techniqueId,
+    front,
+    side,
+    combinedScore,
+    verified,
+    mode,
+  };
 }

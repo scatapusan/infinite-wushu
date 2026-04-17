@@ -1,25 +1,64 @@
 "use client";
 
 import { useEffect, useCallback, useRef } from "react";
-import type { PoseLandmark, AngleResult, StanceAngleConfig } from "@/lib/pose/types";
+import type {
+  PoseLandmark,
+  CheckResult,
+  CheckStatus,
+  StanceCheckConfig,
+  CameraView as CameraViewKind,
+} from "@/lib/pose/types";
 import { drawSkeleton } from "@/lib/pose/draw-skeleton";
+import { landmarksFor } from "@/lib/pose/check-evaluators";
 
 type Props = {
   videoRef: React.RefObject<HTMLVideoElement>;
   canvasRef: React.RefObject<HTMLCanvasElement>;
   landmarks: PoseLandmark[] | null;
   mirrored: boolean;
-  angleResults: AngleResult[] | null;
-  angleConfig: StanceAngleConfig | null;
+  checks: CheckResult[] | null;
+  config: StanceCheckConfig | null;
+  view: CameraViewKind | null;
 };
+
+const STATUS_PRIORITY: Record<CheckStatus, number> = {
+  green: 0,
+  yellow: 1,
+  red: 2,
+};
+
+/** Given the per-check landmark indices, assign each landmark the worst status among checks it participates in. */
+function buildLandmarkStatusMap(
+  checks: CheckResult[],
+  config: StanceCheckConfig,
+  view: CameraViewKind,
+): Map<number, CheckStatus> {
+  const map = new Map<number, CheckStatus>();
+  const byId = new Map(
+    config.checks.filter((c) => c.view === view).map((c) => [c.id, c]),
+  );
+  for (const r of checks) {
+    const def = byId.get(r.id);
+    if (!def) continue;
+    const indices = landmarksFor(def);
+    for (const idx of indices) {
+      const existing = map.get(idx);
+      if (!existing || STATUS_PRIORITY[r.status] > STATUS_PRIORITY[existing]) {
+        map.set(idx, r.status);
+      }
+    }
+  }
+  return map;
+}
 
 export default function CameraView({
   videoRef,
   canvasRef,
   landmarks,
   mirrored,
-  angleResults,
-  angleConfig,
+  checks,
+  config,
+  view,
 }: Props) {
   const drawRafRef = useRef(0);
 
@@ -28,7 +67,6 @@ export default function CameraView({
     const video = videoRef.current;
     if (!canvas || !video) return;
 
-    // Match canvas size to video display size
     const rect = canvas.getBoundingClientRect();
     if (canvas.width !== rect.width || canvas.height !== rect.height) {
       canvas.width = rect.width;
@@ -39,22 +77,22 @@ export default function CameraView({
     if (!ctx) return;
 
     if (landmarks) {
-      const specs = angleConfig
-        ? angleConfig.angles.map((a) => a.landmarks)
-        : null;
+      const colorMap =
+        checks && config && view
+          ? buildLandmarkStatusMap(checks, config, view)
+          : null;
       drawSkeleton(
         ctx,
         landmarks,
         canvas.width,
         canvas.height,
         mirrored,
-        angleResults,
-        specs,
+        colorMap,
       );
     } else {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-  }, [videoRef, canvasRef, landmarks, mirrored, angleResults, angleConfig]);
+  }, [videoRef, canvasRef, landmarks, mirrored, checks, config, view]);
 
   useEffect(() => {
     function loop() {

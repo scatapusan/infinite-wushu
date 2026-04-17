@@ -37,16 +37,26 @@ const REQUIRED_LANDMARKS: { name: string; indices: [number, number] }[] = [
   { name: "Ankles",    indices: [27, 28] },
 ];
 
-const VISIBILITY_THRESHOLD = 0.5;
+/** Landmark present in frame */
+export const DETECT_THRESHOLD = 0.5;
+/** Landmark clearly visible — required before scoring starts */
+export const READY_THRESHOLD = 0.7;
 
 export function checkBodyVisibility(landmarks: PoseLandmark[]): BodyVisibility {
-  const parts = REQUIRED_LANDMARKS.map(({ name, indices }) => ({
-    name,
-    visible:
-      landmarks[indices[0]]?.visibility >= VISIBILITY_THRESHOLD &&
-      landmarks[indices[1]]?.visibility >= VISIBILITY_THRESHOLD,
-  }));
-  return { ready: parts.every((p) => p.visible), parts };
+  const parts = REQUIRED_LANDMARKS.map(({ name, indices }) => {
+    const v1 = landmarks[indices[0]]?.visibility ?? 0;
+    const v2 = landmarks[indices[1]]?.visibility ?? 0;
+    return {
+      name,
+      detected: v1 >= DETECT_THRESHOLD && v2 >= DETECT_THRESHOLD,
+      confident: v1 >= READY_THRESHOLD && v2 >= READY_THRESHOLD,
+    };
+  });
+  return {
+    ready: parts.every((p) => p.confident),
+    detected: parts.every((p) => p.detected),
+    parts,
+  };
 }
 
 function midpoint(a: PoseLandmark, b: PoseLandmark): PoseLandmark {

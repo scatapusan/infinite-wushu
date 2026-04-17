@@ -7,32 +7,43 @@ type Props = {
   holding: boolean;
   /** Threshold in seconds to show success */
   target?: number;
+  /** Fires once when hold-time crosses target */
+  onOfficial?: () => void;
 };
 
-export default function HoldTimer({ holding, target = 2 }: Props) {
+export default function HoldTimer({ holding, target = 3, onOfficial }: Props) {
   const [seconds, setSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const firedRef = useRef(false);
 
   useEffect(() => {
     if (holding) {
       intervalRef.current = setInterval(() => {
-        setSeconds((s) => s + 0.1);
+        setSeconds((s) => {
+          const next = s + 0.1;
+          if (!firedRef.current && next >= target) {
+            firedRef.current = true;
+            onOfficial?.();
+          }
+          return next;
+        });
       }, 100);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
       setSeconds(0);
+      firedRef.current = false;
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [holding]);
+  }, [holding, target, onOfficial]);
 
   const display = seconds.toFixed(1);
   const met = seconds >= target;
 
   return (
     <div className="text-center">
-      <p className="text-xs uppercase tracking-widest text-foreground/50">
+      <p className="text-[10px] uppercase tracking-widest text-foreground/50">
         Hold
       </p>
       <p
@@ -40,8 +51,8 @@ export default function HoldTimer({ holding, target = 2 }: Props) {
       >
         {display}s
       </p>
-      <p className="text-xs text-foreground/40">
-        {met ? "Great hold!" : `Target: ${target}s`}
+      <p className="text-[10px] text-foreground/40">
+        {met ? "Official!" : `Target: ${target}s`}
       </p>
     </div>
   );
