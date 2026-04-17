@@ -7,6 +7,7 @@ import {
   isHandTrackingEnabled,
   setHandTracking,
 } from "@/lib/preferences";
+import ToggleSwitch from "@/components/ToggleSwitch";
 
 export default function HandTrackingToggle() {
   const [enabled, setEnabled] = useState(false);
@@ -43,20 +44,12 @@ export default function HandTrackingToggle() {
         )}
       </div>
 
-      <button
-        onClick={toggle}
-        role="switch"
-        aria-checked={enabled}
-        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan ${
-          enabled ? "bg-gold" : "bg-white/10"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            enabled ? "translate-x-5" : "translate-x-0.5"
-          }`}
-        />
-      </button>
+      <ToggleSwitch
+        enabled={enabled}
+        onChange={toggle}
+        activeClass="bg-gold"
+        label="Hand tracking"
+      />
     </div>
   );
 }
