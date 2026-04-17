@@ -21,7 +21,7 @@ export default function ChineseDisplayToggle() {
               key={m.value}
               type="button"
               onClick={() => setMode(m.value)}
-              className={`min-h-11 rounded-card-sm px-3 py-2 text-xs font-semibold transition sm:min-h-0 ${
+              className={`rounded-card-sm px-3 py-2.5 text-xs font-semibold transition ${
                 active
                   ? "bg-cyan/15 text-cyan"
                   : "text-foreground/60 hover:text-foreground/90"
