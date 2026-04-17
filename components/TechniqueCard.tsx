@@ -7,9 +7,14 @@ import { PRACTICABLE_IDS } from "@/lib/pose/technique-lookup";
 
 type Props = {
   technique: Technique;
+  /** URL to return to from practice mode (lesson page the card is rendered on) */
+  backHref?: string;
 };
 
-export default function TechniqueCard({ technique: t }: Props) {
+export default function TechniqueCard({ technique: t, backHref }: Props) {
+  const practiceHref = backHref
+    ? `/practice/${t.id}?from=${encodeURIComponent(backHref)}`
+    : `/practice/${t.id}`;
   return (
     <article className="card-surface space-y-5 p-6">
       {/* Headline */}
@@ -79,7 +84,7 @@ export default function TechniqueCard({ technique: t }: Props) {
       {/* Practice button — only for stances with pose detection configs */}
       {PRACTICABLE_IDS.includes(t.id) && (
         <Link
-          href={`/practice/${t.id}`}
+          href={practiceHref}
           className="btn-gold flex w-full items-center justify-center gap-2"
         >
           <Camera size={14} />

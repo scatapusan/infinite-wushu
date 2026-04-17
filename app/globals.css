@@ -26,6 +26,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Prevent iOS Safari auto-zoom on input focus: text-entry fields must
+   render at ≥16px on mobile. Uses attribute selectors so specificity
+   (0,1,1) beats Tailwind's .text-sm utility (0,1,0) without !important. */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Safe-area insets: reserve space around notch / home-indicator so
+   fixed headers and bottom controls (e.g. practice overlay) stay visible. */
+.safe-pt {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-px {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
 /* Subtle cyan-on-navy texture for desktop — keeps mobile flat */
 @media (min-width: 640px) {
   body {

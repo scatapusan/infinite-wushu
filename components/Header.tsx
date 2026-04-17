@@ -25,7 +25,7 @@ export default function Header({ userEmail }: Props) {
   const navItem = (href: string, label: string, active: boolean) => (
     <Link
       href={href}
-      className={`rounded-card-sm px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition ${
+      className={`inline-flex min-h-11 items-center rounded-card-sm px-3 text-xs font-semibold uppercase tracking-[0.15em] transition active:scale-[0.97] ${
         active
           ? "bg-cyan/10 text-cyan"
           : "text-foreground/50 hover:text-foreground/90"
@@ -43,7 +43,7 @@ export default function Header({ userEmail }: Props) {
   const vocabActive = pathname.startsWith("/vocab");
 
   return (
-    <header className="flex items-center justify-between gap-4 px-6 py-5">
+    <header className="safe-pt flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-5">
       <Link href={learnHref} className="flex items-center gap-3">
         <span className="font-chinese text-2xl font-bold text-gold">武学</span>
         <div className="flex flex-col leading-tight">
@@ -70,13 +70,13 @@ export default function Header({ userEmail }: Props) {
         <Link
           href="/settings"
           aria-label="Settings"
-          className={`rounded-card-sm p-1.5 transition ${
+          className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-card-sm transition active:scale-95 ${
             pathname === "/settings"
               ? "text-cyan"
               : "text-foreground/40 hover:text-foreground/80"
           }`}
         >
-          <Settings size={16} />
+          <Settings size={18} />
         </Link>
 
         {userEmail ? (

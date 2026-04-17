@@ -27,6 +27,7 @@ export const viewport: Viewport = {
   themeColor: "#080c1a",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 // Force dark theme; no light mode toggle in Phase 1.

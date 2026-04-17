@@ -76,13 +76,13 @@ export default function SpeakButton({ text, className = "" }: Props) {
         onClick={handleClick}
         aria-label={`Pronounce in Chinese: ${text}`}
         title={unavailable ? UNAVAIL_MSG : "Hear pronunciation"}
-        className={`flex h-6 w-6 items-center justify-center rounded-full transition focus:outline-none ${
+        className={`inline-flex h-11 w-11 items-center justify-center rounded-full transition focus:outline-none active:scale-90 ${
           unavailable
             ? "cursor-not-allowed text-foreground/20"
-            : "text-foreground/35 hover:text-cyan"
+            : "text-foreground/35 hover:text-cyan hover:bg-cyan/5"
         }`}
       >
-        <Volume2 size={13} />
+        <Volume2 size={16} />
       </button>
 
       {showTip && (

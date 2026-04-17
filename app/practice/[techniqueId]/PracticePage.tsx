@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, SwitchCamera } from "lucide-react";
 import type { Technique } from "@/lib/types";
 import type {
@@ -40,7 +41,20 @@ type Props = {
   lessonId: string;
 };
 
+// Only accept same-origin absolute paths to prevent open-redirect misuse
+function safeBackHref(raw: string | null, fallback: string): string {
+  if (!raw) return fallback;
+  try {
+    const decoded = decodeURIComponent(raw);
+    if (decoded.startsWith("/") && !decoded.startsWith("//")) return decoded;
+  } catch {
+    /* fall through */
+  }
+  return fallback;
+}
+
 export default function PracticePage({ technique, lessonId }: Props) {
+  const searchParams = useSearchParams();
   const pose = usePoseDetection();
   const config = STANCE_CHECKS[technique.id] ?? null;
   const [bodyVisibility, setBodyVisibility] = useState<BodyVisibility | null>(
@@ -192,7 +206,10 @@ export default function PracticePage({ technique, lessonId }: Props) {
   }, [state.phase, state.captures, plan.length, technique.id]);
 
   const mirrored = pose.facingMode === "user";
-  const backHref = `/demo/learn/stances/${lessonId}`;
+  const backHref = safeBackHref(
+    searchParams?.get("from") ?? null,
+    `/demo/learn/stances/${lessonId}`,
+  );
   const currentStepIndex = plan.indexOf(state.currentView);
   const bufferedForCurrent = state.buffered[state.currentView];
 
@@ -216,12 +233,12 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-[#080c1a]">
-      <header className="relative z-10 flex items-center gap-3 px-4 py-3">
+      <header className="safe-pt safe-px relative z-10 flex items-center gap-3 px-3 py-2">
         <Link
           href={backHref}
-          className="flex items-center gap-1.5 rounded-card-sm border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-foreground/70 hover:text-foreground transition-colors"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-card-sm border border-white/10 bg-white/5 px-3 text-sm text-foreground/80 transition-colors hover:text-foreground active:scale-95"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={18} />
           Back
         </Link>
 
@@ -232,10 +249,10 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
         <button
           onClick={pose.toggleCamera}
-          className="flex items-center gap-1.5 rounded-card-sm border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-foreground/70 hover:text-foreground transition-colors"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-card-sm border border-white/10 bg-white/5 px-3 text-sm text-foreground/80 transition-colors hover:text-foreground active:scale-95"
           aria-label="Switch camera"
         >
-          <SwitchCamera size={16} />
+          <SwitchCamera size={18} />
         </button>
       </header>
 
@@ -250,11 +267,24 @@ export default function PracticePage({ technique, lessonId }: Props) {
         )}
 
         {pose.error && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[#080c1a] px-6 text-center">
-            <p className="text-crimson font-medium">{pose.error}</p>
-            <p className="text-sm text-foreground/50">
-              Make sure your browser has camera permissions enabled.
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-[#080c1a] px-6 text-center">
+            <p className="font-medium text-crimson">{pose.error}</p>
+            <p className="max-w-xs text-sm text-foreground/60">
+              Enable camera access in your browser settings, then reload this
+              page. Or go back to the lesson to continue without practice.
             </p>
+            <div className="flex flex-wrap justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="btn-gold"
+              >
+                Reload
+              </button>
+              <Link href={backHref} className="btn-ghost">
+                Back to lesson
+              </Link>
+            </div>
           </div>
         )}
 
@@ -311,12 +341,12 @@ export default function PracticePage({ technique, lessonId }: Props) {
         {state.phase === "awaiting" &&
           bufferedForCurrent &&
           !state.captures[state.currentView] && (
-            <div className="pointer-events-auto absolute left-1/2 top-20 z-20 -translate-x-1/2 rounded-card-sm border border-cyan/30 bg-[#080c1a]/90 px-3 py-2 backdrop-blur-md">
+            <div className="pointer-events-auto absolute left-1/2 top-20 z-20 -translate-x-1/2 rounded-card-sm border border-cyan/30 bg-[#080c1a]/90 backdrop-blur-md">
               <button
                 onClick={() =>
                   dispatch({ type: "USE_BUFFERED", view: state.currentView })
                 }
-                className="text-xs text-cyan hover:underline"
+                className="inline-flex min-h-11 items-center px-4 text-sm font-semibold text-cyan active:scale-95"
               >
                 Use last reading (score {bufferedForCurrent.score}) →
               </button>
@@ -332,7 +362,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
         {/* Feedback panel */}
         {state.phase !== "results" && state.phase !== "countdown" && (
-          <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-2 p-3 sm:p-4">
+          <div className="safe-pb absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-2 p-3 sm:p-4">
             <FeedbackPanel
               evaluation={liveEval}
               holdSeconds={3}

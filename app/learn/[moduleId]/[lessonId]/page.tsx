@@ -95,7 +95,11 @@ export default async function LessonPage({
           ) : (
             <div className="space-y-5">
               {techniques.map((t) => (
-                <TechniqueCard key={t.id} technique={t} />
+                <TechniqueCard
+                  key={t.id}
+                  technique={t}
+                  backHref={`/learn/${params.moduleId}/${params.lessonId}`}
+                />
               ))}
             </div>
           )}

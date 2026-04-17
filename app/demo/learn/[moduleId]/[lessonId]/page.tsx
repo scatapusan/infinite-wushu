@@ -75,7 +75,11 @@ export default function DemoLessonPage({
           ) : (
             <div className="space-y-5">
               {techniques.map((t) => (
-                <TechniqueCard key={t.id} technique={t} />
+                <TechniqueCard
+                  key={t.id}
+                  technique={t}
+                  backHref={`/demo/learn/${params.moduleId}/${params.lessonId}`}
+                />
               ))}
             </div>
           )}
