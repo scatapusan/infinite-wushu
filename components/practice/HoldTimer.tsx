@@ -9,7 +9,7 @@ type Props = {
   target?: number;
 };
 
-export default function HoldTimer({ holding, target = 2 }: Props) {
+export default function HoldTimer({ holding, target = 10 }: Props) {
   const [seconds, setSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 

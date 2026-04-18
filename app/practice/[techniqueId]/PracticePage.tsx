@@ -51,7 +51,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
   // Save practice attempt on unmount
   const saveAttempt = useCallback(() => {
     const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
-    if (duration < 3) return; // Don't save very short sessions
+    if (duration < 10) return; // Don't save very short sessions
 
     const angles: Record<string, number> = {};
     if (evaluation) {
