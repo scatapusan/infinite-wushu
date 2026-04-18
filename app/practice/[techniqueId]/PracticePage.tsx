@@ -181,6 +181,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
       mode,
     );
     const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
+    if (duration < 10) return; // Don't save very short sessions
     savePracticeAttempt({
       techniqueId: technique.id,
       score: combined.combinedScore,

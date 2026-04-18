@@ -11,7 +11,7 @@ type Props = {
   onOfficial?: () => void;
 };
 
-export default function HoldTimer({ holding, target = 3, onOfficial }: Props) {
+export default function HoldTimer({ holding, target = 10, onOfficial }: Props) {
   const [seconds, setSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const firedRef = useRef(false);
