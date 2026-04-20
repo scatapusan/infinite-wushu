@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, SwitchCamera } from "lucide-react";
+import { ArrowLeft, SwitchCamera, Eye, EyeOff, FlipHorizontal } from "lucide-react";
 import type { Technique } from "@/lib/types";
 import type {
   BodyVisibility,
@@ -16,15 +16,27 @@ import type {
 import { usePoseDetection } from "@/lib/pose/use-pose-detection";
 import { useHandDetection } from "@/lib/pose/use-hand-detection";
 import { STANCE_CHECKS } from "@/lib/pose/stance-checks";
-import { evaluateStanceView, combineViews } from "@/lib/pose/pose-evaluator";
+import { evaluateStanceFrame, combineViews } from "@/lib/pose/pose-evaluator";
 import { evaluateHands } from "@/lib/pose/hand-evaluator";
 import { checkBodyVisibility } from "@/lib/pose/angle-utils";
 import { savePracticeAttempt } from "@/lib/pose/practice-storage";
-import { isQuickMode, isHandTrackingEnabled } from "@/lib/preferences";
+import {
+  isQuickMode,
+  isHandTrackingEnabled,
+  showReferenceSkeleton,
+  setShowReferenceSkeleton,
+} from "@/lib/preferences";
 import {
   useFlowReducer,
   COUNTDOWN_SECONDS,
 } from "@/lib/pose/view-state-machine";
+import {
+  classifyVariant,
+  legAssignmentFor,
+  type StanceVariant,
+} from "@/lib/pose/leg-resolver";
+import { getReferenceSkeleton } from "@/lib/pose/reference-skeletons";
+import { useTemporalBuffer } from "@/lib/pose/temporal-buffer";
 import CameraView from "@/components/practice/CameraView";
 import FeedbackPanel from "@/components/practice/FeedbackPanel";
 import BodyVisibilityOverlay from "@/components/practice/BodyVisibilityOverlay";
@@ -71,6 +83,18 @@ export default function PracticePage({ technique, lessonId }: Props) {
   const [handFeedback, setHandFeedback] = useState<HandFeedback | null>(null);
   const lowFpsSinceRef = useRef<number | null>(null);
 
+  // Reference skeleton state
+  const [showRef, setShowRef] = useState(true);
+  const [variant, setVariant] = useState<StanceVariant>("left-forward");
+  const variantLockedRef = useRef(false);
+  const [adjustCamera, setAdjustCamera] = useState(false);
+
+  // 10-frame rolling buffer of gate pass/fail — drives hold timer.
+  // Destructure so `bufferPush`/`bufferReset` are stable useCallback refs; the
+  // returned object itself is a new reference each render.
+  const { status: bufferStatus, push: bufferPush, reset: bufferReset } =
+    useTemporalBuffer();
+
   const plan = useMemo<CameraViewKind[]>(() => {
     if (!config) return ["front"];
     const primary = config.primaryView;
@@ -84,6 +108,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
   useEffect(() => {
     setQuickModeState(isQuickMode());
     setHandTrackingEnabledState(isHandTrackingEnabled());
+    setShowRef(showReferenceSkeleton());
   }, []);
   useEffect(() => {
     reset(plan);
@@ -119,6 +144,9 @@ export default function PracticePage({ technique, lessonId }: Props) {
       setLiveEval(null);
       liveEvalRef.current = null;
       setHandFeedback(null);
+      setAdjustCamera(false);
+      bufferReset();
+      variantLockedRef.current = false;
       return;
     }
 
@@ -129,21 +157,44 @@ export default function PracticePage({ technique, lessonId }: Props) {
     // Only evaluate in states where we're actively capturing
     if (state.phase !== "holding" && state.phase !== "awaiting") return;
 
+    // Lock in the variant once we can classify it (sticky for the session).
+    if (!variantLockedRef.current) {
+      const detected = classifyVariant(pose.landmarks, technique.id);
+      if (detected) {
+        setVariant(detected);
+        variantLockedRef.current = true;
+      }
+    }
+
+    const assignment = legAssignmentFor(variant);
+
     const handsActive = handTrackingEnabled && !handsPaused && hands.ready;
     const hf = handsActive
       ? evaluateHands(pose.landmarks, hands.left, hands.right, armPosition)
       : null;
     setHandFeedback(hf);
 
-    const ev = evaluateStanceView(
+    const frame = evaluateStanceFrame(
       pose.landmarks,
       config,
       state.currentView,
+      assignment,
       hf?.checks ?? [],
     );
+    const ev = frame.view;
     setLiveEval(ev);
     liveEvalRef.current = ev;
     if (ev.score > bestScoreRef.current) bestScoreRef.current = ev.score;
+
+    // Gates drive the hold timer via the 10-frame rolling buffer.
+    // Reset (not fail) on visibility issues — surface "adjust camera" instead.
+    if (frame.gates.anyNotVisible) {
+      setAdjustCamera(true);
+      bufferReset();
+    } else {
+      setAdjustCamera(false);
+      bufferPush(frame.gates.allPass);
+    }
 
     // Buffer last valid evaluation for "use last capture"
     if (ev.score >= 70) {
@@ -161,6 +212,10 @@ export default function PracticePage({ technique, lessonId }: Props) {
     hands.left,
     hands.right,
     armPosition,
+    bufferPush,
+    bufferReset,
+    variant,
+    technique.id,
   ]);
 
   // Fires when HoldTimer reaches its target — capture this view
@@ -206,6 +261,31 @@ export default function PracticePage({ technique, lessonId }: Props) {
     );
   }, [state.phase, state.captures, plan.length, technique.id]);
 
+  // Reference skeleton is only meaningful on the stance's primary view.
+  const activeReference = useMemo(() => {
+    if (!showRef || !config) return null;
+    if (state.currentView !== config.primaryView) return null;
+    return getReferenceSkeleton(technique.id, variant);
+  }, [showRef, config, state.currentView, technique.id, variant]);
+
+  // horse-stance (mabu) is the only symmetric stance — others have a distinct front/back leg.
+  const isAsymmetric = technique.id !== "horse-stance";
+
+  function toggleReference() {
+    setShowRef((prev) => {
+      const next = !prev;
+      setShowReferenceSkeleton(next);
+      return next;
+    });
+  }
+
+  function flipVariant() {
+    setVariant((prev) =>
+      prev === "left-forward" ? "right-forward" : "left-forward",
+    );
+    variantLockedRef.current = true;
+  }
+
   const mirrored = pose.facingMode === "user";
   const backHref = safeBackHref(
     searchParams?.get("from") ?? null,
@@ -222,6 +302,9 @@ export default function PracticePage({ technique, lessonId }: Props) {
     setHandFeedback(null);
     setHandsPaused(false);
     lowFpsSinceRef.current = null;
+    bufferReset();
+    variantLockedRef.current = false;
+    setAdjustCamera(false);
     reset(plan);
   }
 
@@ -247,6 +330,25 @@ export default function PracticePage({ technique, lessonId }: Props) {
           <h1 className="text-lg font-bold">{technique.english}</h1>
           <p className="text-sm text-gold font-chinese">{technique.chinese}</p>
         </div>
+
+        <button
+          onClick={toggleReference}
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-card-sm border border-white/10 bg-white/5 px-3 text-sm text-foreground/80 transition-colors hover:text-foreground active:scale-95"
+          aria-label={showRef ? "Hide reference skeleton" : "Show reference skeleton"}
+          aria-pressed={showRef}
+        >
+          {showRef ? <Eye size={18} /> : <EyeOff size={18} />}
+        </button>
+
+        {isAsymmetric && showRef && (
+          <button
+            onClick={flipVariant}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-card-sm border border-white/10 bg-white/5 px-3 text-sm text-foreground/80 transition-colors hover:text-foreground active:scale-95"
+            aria-label="Flip reference stance"
+          >
+            <FlipHorizontal size={18} />
+          </button>
+        )}
 
         <button
           onClick={pose.toggleCamera}
@@ -297,6 +399,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
           checks={liveEval?.checks ?? null}
           config={config}
           view={state.currentView}
+          referenceSkeleton={activeReference}
         />
 
         {/* Top row: view indicator + body visibility */}
@@ -366,8 +469,10 @@ export default function PracticePage({ technique, lessonId }: Props) {
           <div className="safe-pb absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-2 p-3 sm:p-4">
             <FeedbackPanel
               evaluation={liveEval}
-              holdSeconds={3}
+              holdSeconds={2}
               onOfficial={handleOfficial}
+              holding={bufferStatus.allPass}
+              adjustCamera={adjustCamera}
             >
               {handsVisible && (
                 <HandFeedbackRow

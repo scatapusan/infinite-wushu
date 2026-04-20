@@ -2,6 +2,7 @@
 
 const QUICK_MODE_KEY = "wuxue:quick-mode";
 const HAND_TRACKING_KEY = "wuxue:hand-tracking";
+const SHOW_REFERENCE_KEY = "wuxue:show-reference";
 
 function isMobileUA(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -46,4 +47,16 @@ export function setHandTracking(enabled: boolean): void {
 export function resetHandTracking(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(HAND_TRACKING_KEY);
+}
+
+/** Reference skeleton overlay: default ON. */
+export function showReferenceSkeleton(): boolean {
+  if (typeof window === "undefined") return true;
+  const raw = window.localStorage.getItem(SHOW_REFERENCE_KEY);
+  return raw !== "0";
+}
+
+export function setShowReferenceSkeleton(enabled: boolean): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SHOW_REFERENCE_KEY, enabled ? "1" : "0");
 }

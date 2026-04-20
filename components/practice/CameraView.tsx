@@ -8,8 +8,9 @@ import type {
   StanceCheckConfig,
   CameraView as CameraViewKind,
 } from "@/lib/pose/types";
-import { drawSkeleton } from "@/lib/pose/draw-skeleton";
+import { drawSkeleton, drawReferenceSkeleton } from "@/lib/pose/draw-skeleton";
 import { landmarksFor } from "@/lib/pose/check-evaluators";
+import type { ReferenceSkeleton } from "@/lib/pose/reference-skeletons";
 
 type Props = {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -19,6 +20,7 @@ type Props = {
   checks: CheckResult[] | null;
   config: StanceCheckConfig | null;
   view: CameraViewKind | null;
+  referenceSkeleton: ReferenceSkeleton | null;
 };
 
 const STATUS_PRIORITY: Record<CheckStatus, number> = {
@@ -59,6 +61,7 @@ export default function CameraView({
   checks,
   config,
   view,
+  referenceSkeleton,
 }: Props) {
   const drawRafRef = useRef(0);
 
@@ -76,7 +79,20 @@ export default function CameraView({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     if (landmarks) {
+      // Draw reference skeleton FIRST (behind user's skeleton).
+      if (referenceSkeleton) {
+        drawReferenceSkeleton(
+          ctx,
+          referenceSkeleton.landmarks,
+          landmarks,
+          canvas.width,
+          canvas.height,
+          mirrored,
+        );
+      }
       const colorMap =
         checks && config && view
           ? buildLandmarkStatusMap(checks, config, view)
@@ -89,10 +105,8 @@ export default function CameraView({
         mirrored,
         colorMap,
       );
-    } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-  }, [videoRef, canvasRef, landmarks, mirrored, checks, config, view]);
+  }, [videoRef, canvasRef, landmarks, mirrored, checks, config, view, referenceSkeleton]);
 
   useEffect(() => {
     function loop() {

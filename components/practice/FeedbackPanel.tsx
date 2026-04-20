@@ -9,6 +9,13 @@ type Props = {
   evaluation: ViewEvaluation | null;
   onOfficial?: () => void;
   holdSeconds?: number;
+  /**
+   * Drive the hold timer externally (gate-based). When provided, replaces the
+   * legacy score ≥ 70 heuristic. When undefined, falls back to the score.
+   */
+  holding?: boolean;
+  /** If true, show "adjust camera angle" banner instead of checks. */
+  adjustCamera?: boolean;
   /** Optional extra rows below the failure list (e.g. hand feedback) */
   children?: React.ReactNode;
 };
@@ -28,12 +35,14 @@ const TEXT_CLASS = {
 export default function FeedbackPanel({
   evaluation,
   onOfficial,
-  holdSeconds = 3,
+  holdSeconds = 2,
+  holding: holdingProp,
+  adjustCamera = false,
   children,
 }: Props) {
   const [showPassing, setShowPassing] = useState(false);
   const score = evaluation?.score ?? 0;
-  const holding = score >= 70;
+  const holding = holdingProp ?? score >= 70;
 
   const passing = evaluation?.checks.filter((c) => c.status === "green") ?? [];
   const nonPassing = evaluation?.checks.filter((c) => c.status !== "green") ?? [];
@@ -43,7 +52,11 @@ export default function FeedbackPanel({
       <ScoreCircle score={score} />
 
       <div className="flex-1 space-y-1.5 min-w-0">
-        {evaluation ? (
+        {adjustCamera ? (
+          <p className="text-sm font-medium text-gold">
+            Adjust camera angle — some landmarks not clearly visible.
+          </p>
+        ) : evaluation ? (
           <>
             {nonPassing.length > 0 && (
               <ul className="space-y-1">

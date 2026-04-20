@@ -1,5 +1,7 @@
 import type { PoseLandmark, CheckStatus } from "./types";
 
+export const REFERENCE_SKELETON_COLOR = "rgba(34, 211, 238, 0.4)";
+
 /** MediaPipe Pose connection pairs for drawing the skeleton */
 const CONNECTIONS: [number, number][] = [
   // Torso
@@ -56,8 +58,6 @@ export function drawSkeleton(
   mirrored: boolean,
   landmarkColors: Map<number, CheckStatus> | null,
 ): void {
-  ctx.clearRect(0, 0, width, height);
-
   // Draw connections first
   ctx.lineWidth = 2;
   ctx.strokeStyle = COLORS.connection;
@@ -96,4 +96,76 @@ export function drawSkeleton(
     ctx.fillStyle = color;
     ctx.fill();
   }
+}
+
+/**
+ * Draw a reference skeleton (ghost overlay) scaled and anchored to the user.
+ *
+ *   - `reference` landmarks are in shoulder-width units, origin at shoulder midpoint.
+ *   - `userLandmarks` provides the anchor: shoulder midpoint + shoulder width in pixels.
+ *
+ * Call BEFORE drawSkeleton so the user's skeleton renders on top.
+ */
+export function drawReferenceSkeleton(
+  ctx: CanvasRenderingContext2D,
+  reference: PoseLandmark[],
+  userLandmarks: PoseLandmark[],
+  width: number,
+  height: number,
+  mirrored: boolean,
+): void {
+  const userL = userLandmarks[11];
+  const userR = userLandmarks[12];
+  if (!userL || !userR) return;
+  if ((userL.visibility ?? 0) < 0.5 || (userR.visibility ?? 0) < 0.5) return;
+
+  // User's shoulder midpoint + shoulder width in PIXELS
+  const userLx = (mirrored ? 1 - userL.x : userL.x) * width;
+  const userLy = userL.y * height;
+  const userRx = (mirrored ? 1 - userR.x : userR.x) * width;
+  const userRy = userR.y * height;
+  const midX = (userLx + userRx) / 2;
+  const midY = (userLy + userRy) / 2;
+  const shoulderPx = Math.hypot(userRx - userLx, userRy - userLy);
+  if (shoulderPx < 10) return;
+
+  function project(lm: PoseLandmark): { x: number; y: number } {
+    // Reference coords are already mirrored-friendly (symmetric around x=0).
+    // We do NOT apply the mirrored flag here — mirroring is a display transform
+    // on user coords, but the reference's own left/right is already laid out
+    // to match the user after their mirror has been applied.
+    return {
+      x: midX + lm.x * shoulderPx,
+      y: midY + lm.y * shoulderPx,
+    };
+  }
+
+  ctx.save();
+  ctx.strokeStyle = REFERENCE_SKELETON_COLOR;
+  ctx.fillStyle = REFERENCE_SKELETON_COLOR;
+  ctx.lineWidth = 2;
+
+  for (const [i, j] of CONNECTIONS) {
+    if (i >= reference.length || j >= reference.length) continue;
+    const a = reference[i];
+    const b = reference[j];
+    if ((a.visibility ?? 0) < 0.5 || (b.visibility ?? 0) < 0.5) continue;
+    const ap = project(a);
+    const bp = project(b);
+    ctx.beginPath();
+    ctx.moveTo(ap.x, ap.y);
+    ctx.lineTo(bp.x, bp.y);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < reference.length; i++) {
+    const lm = reference[i];
+    if ((lm.visibility ?? 0) < 0.5) continue;
+    const p = project(lm);
+    const radius = EVAL_LANDMARKS.has(i) ? 4 : 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  ctx.restore();
 }

@@ -7,6 +7,37 @@ import type {
   CombinedEvaluation,
 } from "./types";
 import { evaluateCheck } from "./check-evaluators";
+import {
+  evaluateGates,
+  getStanceGates,
+  type GatesEvaluation,
+  type LegAssignment,
+} from "./stance-gates";
+
+export type StanceFrameEvaluation = {
+  view: ViewEvaluation;
+  gates: GatesEvaluation;
+};
+
+/**
+ * Evaluate both the scored checks and the spatial gates in one pass.
+ * Gates enforce AND logic and drive the hold timer; checks drive the score display.
+ */
+export function evaluateStanceFrame(
+  landmarks: PoseLandmark[],
+  config: StanceCheckConfig,
+  view: CameraView,
+  assignment: LegAssignment,
+  extraChecks: CheckResult[] = [],
+): StanceFrameEvaluation {
+  const viewEval = evaluateStanceView(landmarks, config, view, extraChecks);
+  const gates = evaluateGates(
+    landmarks,
+    getStanceGates(config.techniqueId),
+    assignment,
+  );
+  return { view: viewEval, gates };
+}
 
 /**
  * Evaluate all checks in a stance config that apply to the given view.
