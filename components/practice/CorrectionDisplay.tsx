@@ -16,11 +16,12 @@ export default function CorrectionDisplay({
 }: Props) {
   const [index, setIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const correctionKey = corrections.join("|");
 
   // Reset index when correction list changes
   useEffect(() => {
     setIndex(0);
-  }, [corrections.join("|")]);
+  }, [correctionKey]);
 
   // Rotate through corrections
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function CorrectionDisplay({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [corrections.length, rotationInterval, corrections.join("|")]);
+  }, [corrections.length, rotationInterval, correctionKey]);
 
   // TTS — speak when displayed correction changes
   const current = corrections[index] ?? null;

@@ -134,7 +134,7 @@ export default function SetupScreen({
       {config.voiceEnabled && (
         <div className="mx-6 mt-4 rounded-2xl border border-[#00D4FF]/20 bg-[#00D4FF]/5 px-6 py-4">
           <p className="font-semibold text-[#00D4FF]" style={{ fontSize: "1.75rem" }}>
-            Voice: "Score me" · "Switch view" · "Repeat" · "Exit"
+            Voice: &quot;Score me&quot; · &quot;Switch view&quot; · &quot;Repeat&quot; · &quot;Exit&quot;
           </p>
         </div>
       )}

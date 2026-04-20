@@ -25,12 +25,10 @@ function matchCommand(transcript: string): VoiceCommand | null {
 }
 
 // SpeechRecognition is not consistently typed across TS targets; use any.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySpeechRecognition = any;
 
 function getSpeechRecognitionCtor(): (new () => AnySpeechRecognition) | null {
   if (typeof window === "undefined") return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const w = window as any;
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
