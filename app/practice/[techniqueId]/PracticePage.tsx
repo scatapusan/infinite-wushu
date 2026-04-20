@@ -76,6 +76,10 @@ export default function PracticePage({ technique, lessonId }: Props) {
   const [practiceStarted, setPracticeStarted] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [ttsOn, setTtsOn] = useState(true);
+  const [setupCameraView, setSetupCameraView] = useState<CameraViewKind>(
+    () => config?.primaryView ?? "front",
+  );
 
   // ── Core evaluation state ────────────────────────────────────────
   const [bodyVisibility, setBodyVisibility] = useState<BodyVisibility | null>(null);
@@ -109,12 +113,12 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
   const plan = useMemo<CameraViewKind[]>(() => {
     if (!config) return ["front"];
-    const primary = config.primaryView;
-    const secondary: CameraViewKind = primary === "front" ? "side" : "front";
+    const first = setupCameraView;
+    const second: CameraViewKind = first === "front" ? "side" : "front";
     const quickMode =
       typeof window !== "undefined" ? isQuickMode() : false;
-    return quickMode ? [primary] : [primary, secondary];
-  }, [config]);
+    return quickMode ? [first] : [first, second];
+  }, [config, setupCameraView]);
 
   const { state, dispatch, reset } = useFlowReducer(plan);
 
@@ -126,7 +130,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
   // Sync audio prefs
   useEffect(() => { setSfxEnabled(audioEnabled); }, [audioEnabled]);
-  useEffect(() => { setTtsEnabled(audioEnabled && voiceEnabled); }, [audioEnabled, voiceEnabled]);
+  useEffect(() => { setTtsEnabled(ttsOn); }, [ttsOn]);
 
   // FPS guardrail
   const handleHandFps = useCallback((fps: number) => {
@@ -391,16 +395,25 @@ export default function PracticePage({ technique, lessonId }: Props) {
           techniqueName={technique.english}
           techniqueNameChinese={technique.chinese}
           landmarks={pose.landmarks}
+          isAsymmetric={isAsymmetric}
           initialConfig={{
             voiceEnabled: true,
             audioEnabled: true,
+            ttsEnabled: true,
             showRef: showRef,
+            dominantHand: "right",
+            variant: "left-forward",
+            cameraView: config?.primaryView ?? "front",
           }}
           onStart={(cfg) => {
             setVoiceEnabled(cfg.voiceEnabled);
             setAudioEnabled(cfg.audioEnabled);
+            setTtsOn(cfg.ttsEnabled);
             setShowRef(cfg.showRef);
             setShowReferenceSkeleton(cfg.showRef);
+            setSetupCameraView(cfg.cameraView);
+            setVariant(cfg.variant);
+            variantLockedRef.current = true;
             startTimeRef.current = Date.now();
             setPracticeStarted(true);
           }}
@@ -547,7 +560,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
           ) : corrections.length > 0 && !bufferStatus.allPass ? (
             <CorrectionDisplay
               corrections={corrections}
-              ttsEnabled={audioEnabled && voiceEnabled}
+              ttsEnabled={ttsOn}
             />
           ) : bufferStatus.allPass ? (
             <div className="flex items-center justify-center">
