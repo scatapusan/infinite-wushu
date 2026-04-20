@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { ArrowLeft, SwitchCamera, Eye, EyeOff, FlipHorizontal } from "lucide-react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Technique } from "@/lib/types";
 import type {
   BodyVisibility,
   CameraView as CameraViewKind,
   ViewEvaluation,
   CombinedEvaluation,
-  ArmPosition,
-  HandFeedback,
 } from "@/lib/pose/types";
 import { usePoseDetection } from "@/lib/pose/use-pose-detection";
 import { useHandDetection } from "@/lib/pose/use-hand-detection";
@@ -28,7 +30,6 @@ import {
 } from "@/lib/preferences";
 import {
   useFlowReducer,
-  COUNTDOWN_SECONDS,
 } from "@/lib/pose/view-state-machine";
 import {
   classifyVariant,
@@ -37,91 +38,102 @@ import {
 } from "@/lib/pose/leg-resolver";
 import { getReferenceSkeleton } from "@/lib/pose/reference-skeletons";
 import { useTemporalBuffer } from "@/lib/pose/temporal-buffer";
+import { getCorrections } from "@/lib/correction-messages";
+import { useVoiceCommands } from "@/lib/voice-commands";
+import {
+  setTtsEnabled,
+  setSfxEnabled,
+  resetLastSpoken,
+} from "@/lib/audio-feedback";
 import CameraView from "@/components/practice/CameraView";
-import FeedbackPanel from "@/components/practice/FeedbackPanel";
-import BodyVisibilityOverlay from "@/components/practice/BodyVisibilityOverlay";
-import ViewIndicator from "@/components/practice/ViewIndicator";
 import CountdownOverlay from "@/components/practice/CountdownOverlay";
 import ResultsScreen from "@/components/practice/ResultsScreen";
-import Disclaimer from "@/components/practice/Disclaimer";
-import ArmPositionSelector from "@/components/practice/ArmPositionSelector";
-import HandFeedbackRow from "@/components/practice/HandFeedbackRow";
+import CircularHoldTimer from "@/components/practice/CircularHoldTimer";
+import CorrectionDisplay from "@/components/practice/CorrectionDisplay";
+import SetupScreen from "@/components/practice/SetupScreen";
 
 type Props = {
   technique: Technique;
-  /** lesson_id for the back link */
   lessonId: string;
 };
 
-// Only accept same-origin absolute paths to prevent open-redirect misuse
 function safeBackHref(raw: string | null, fallback: string): string {
   if (!raw) return fallback;
   try {
     const decoded = decodeURIComponent(raw);
     if (decoded.startsWith("/") && !decoded.startsWith("//")) return decoded;
-  } catch {
-    /* fall through */
-  }
+  } catch { /* fall through */ }
   return fallback;
 }
 
 export default function PracticePage({ technique, lessonId }: Props) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const pose = usePoseDetection();
   const config = STANCE_CHECKS[technique.id] ?? null;
-  const [bodyVisibility, setBodyVisibility] = useState<BodyVisibility | null>(
-    null,
-  );
+
+  // ── Setup phase ─────────────────────────────────────────────────
+  const [practiceStarted, setPracticeStarted] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+
+  // ── Core evaluation state ────────────────────────────────────────
+  const [bodyVisibility, setBodyVisibility] = useState<BodyVisibility | null>(null);
   const [liveEval, setLiveEval] = useState<ViewEvaluation | null>(null);
   const liveEvalRef = useRef<ViewEvaluation | null>(null);
   const startTimeRef = useRef(Date.now());
   const bestScoreRef = useRef(0);
-  const [quickMode, setQuickModeState] = useState(false);
-  const [handTrackingEnabled, setHandTrackingEnabledState] = useState(false);
-  const [handsPaused, setHandsPaused] = useState(false);
-  const [armPosition, setArmPosition] = useState<ArmPosition>("waist");
-  const [handFeedback, setHandFeedback] = useState<HandFeedback | null>(null);
-  const lowFpsSinceRef = useRef<number | null>(null);
+  const [adjustCamera, setAdjustCamera] = useState(false);
+  const [corrections, setCorrections] = useState<string[]>([]);
 
-  // Reference skeleton state
+  // ── Reference skeleton ───────────────────────────────────────────
   const [showRef, setShowRef] = useState(true);
   const [variant, setVariant] = useState<StanceVariant>("left-forward");
   const variantLockedRef = useRef(false);
-  const [adjustCamera, setAdjustCamera] = useState(false);
 
-  // 10-frame rolling buffer of gate pass/fail — drives hold timer.
-  // Destructure so `bufferPush`/`bufferReset` are stable useCallback refs; the
-  // returned object itself is a new reference each render.
+  // ── Hand tracking ────────────────────────────────────────────────
+  const [handTrackingEnabled] = useState(() =>
+    typeof window !== "undefined" ? isHandTrackingEnabled() : false,
+  );
+  const [handsPaused, setHandsPaused] = useState(false);
+  const lowFpsSinceRef = useRef<number | null>(null);
+
+  // ── Temporal buffer (gates → hold timer) ─────────────────────────
   const { status: bufferStatus, push: bufferPush, reset: bufferReset } =
     useTemporalBuffer();
+
+  // ── Gesture timing ───────────────────────────────────────────────
+  const exitGestureRef = useRef(0);
+  const switchGestureRef = useRef(0);
+  const backHrefRef = useRef("");
 
   const plan = useMemo<CameraViewKind[]>(() => {
     if (!config) return ["front"];
     const primary = config.primaryView;
     const secondary: CameraViewKind = primary === "front" ? "side" : "front";
+    const quickMode =
+      typeof window !== "undefined" ? isQuickMode() : false;
     return quickMode ? [primary] : [primary, secondary];
-  }, [config, quickMode]);
+  }, [config]);
 
   const { state, dispatch, reset } = useFlowReducer(plan);
 
   // Read prefs on mount
   useEffect(() => {
-    setQuickModeState(isQuickMode());
-    setHandTrackingEnabledState(isHandTrackingEnabled());
     setShowRef(showReferenceSkeleton());
   }, []);
-  useEffect(() => {
-    reset(plan);
-  }, [plan, reset]);
+  useEffect(() => { reset(plan); }, [plan, reset]);
 
-  // FPS guardrail: auto-pause hand tracking if FPS < 20 for more than 2s
+  // Sync audio prefs
+  useEffect(() => { setSfxEnabled(audioEnabled); }, [audioEnabled]);
+  useEffect(() => { setTtsEnabled(audioEnabled && voiceEnabled); }, [audioEnabled, voiceEnabled]);
+
+  // FPS guardrail
   const handleHandFps = useCallback((fps: number) => {
     if (fps < 20) {
       const now = performance.now();
       if (lowFpsSinceRef.current === null) lowFpsSinceRef.current = now;
-      else if (now - lowFpsSinceRef.current > 2000) {
-        setHandsPaused(true);
-      }
+      else if (now - lowFpsSinceRef.current > 2000) setHandsPaused(true);
     } else {
       lowFpsSinceRef.current = null;
     }
@@ -129,11 +141,33 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
   const hands = useHandDetection({
     videoRef: pose.videoRef,
-    enabled: handTrackingEnabled && !handsPaused,
+    enabled: handTrackingEnabled && !handsPaused && practiceStarted,
     onFps: handleHandFps,
   });
 
-  // Body-visibility & live evaluation
+  // ── Force-capture (voice / gesture trigger) ──────────────────────
+  const forceCapture = useCallback(() => {
+    const ev = liveEvalRef.current;
+    if (!ev) return;
+    if (state.phase === "holding" || state.phase === "awaiting") {
+      dispatch({ type: "CAPTURE", view: state.currentView, evaluation: ev });
+    }
+  }, [dispatch, state.phase, state.currentView]);
+
+  const forceCaptureRef = useRef(forceCapture);
+  forceCaptureRef.current = forceCapture;
+
+  // ── Voice commands ───────────────────────────────────────────────
+  useVoiceCommands({
+    enabled: practiceStarted && voiceEnabled,
+    onCommand: (cmd) => {
+      if (cmd === "score" || cmd === "switch-view") forceCaptureRef.current();
+      if (cmd === "repeat") handleRetryRef.current();
+      if (cmd === "exit") router.push(backHrefRef.current);
+    },
+  });
+
+  // ── Body-visibility & live evaluation + gesture detection ─────────
   useEffect(() => {
     if (!pose.landmarks) return;
     const visibility = checkBodyVisibility(pose.landmarks);
@@ -143,21 +177,60 @@ export default function PracticePage({ technique, lessonId }: Props) {
       dispatch({ type: "BODY_LOST" });
       setLiveEval(null);
       liveEvalRef.current = null;
-      setHandFeedback(null);
       setAdjustCamera(false);
+      setCorrections([]);
       bufferReset();
       variantLockedRef.current = false;
+      exitGestureRef.current = 0;
+      switchGestureRef.current = 0;
       return;
     }
 
     dispatch({ type: "BODY_READY" });
 
-    if (!config) return;
+    // ── Gesture detection (runs even before practice starts for setup) ──
+    const lw = pose.landmarks[15];
+    const rw = pose.landmarks[16];
+    const ls = pose.landmarks[11];
+    const rs = pose.landmarks[12];
+    const handsOk =
+      (lw?.visibility ?? 0) > 0.5 &&
+      (rw?.visibility ?? 0) > 0.5 &&
+      (ls?.visibility ?? 0) > 0.5 &&
+      (rs?.visibility ?? 0) > 0.5;
 
-    // Only evaluate in states where we're actively capturing
+    if (handsOk && practiceStarted) {
+      const now = Date.now();
+      // Both wrists above shoulders → exit after 1s
+      const handsAbove = lw.y < ls.y - 0.1 && rw.y < rs.y - 0.1;
+      if (handsAbove) {
+        if (exitGestureRef.current === 0) exitGestureRef.current = now;
+        else if (now - exitGestureRef.current >= 1000) {
+          exitGestureRef.current = 0;
+          router.push(backHrefRef.current);
+          return;
+        }
+      } else {
+        exitGestureRef.current = 0;
+      }
+
+      // Arms crossed (lw.x > rw.x in image space) → capture/switch after 1s
+      const armsCrossed = lw.x > rw.x;
+      if (armsCrossed) {
+        if (switchGestureRef.current === 0) switchGestureRef.current = now;
+        else if (now - switchGestureRef.current >= 1000) {
+          switchGestureRef.current = 0;
+          forceCaptureRef.current();
+        }
+      } else {
+        switchGestureRef.current = 0;
+      }
+    }
+
+    if (!config || !practiceStarted) return;
     if (state.phase !== "holding" && state.phase !== "awaiting") return;
 
-    // Lock in the variant once we can classify it (sticky for the session).
+    // Variant lock
     if (!variantLockedRef.current) {
       const detected = classifyVariant(pose.landmarks, technique.id);
       if (detected) {
@@ -170,9 +243,8 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
     const handsActive = handTrackingEnabled && !handsPaused && hands.ready;
     const hf = handsActive
-      ? evaluateHands(pose.landmarks, hands.left, hands.right, armPosition)
+      ? evaluateHands(pose.landmarks, hands.left, hands.right, "waist")
       : null;
-    setHandFeedback(hf);
 
     const frame = evaluateStanceFrame(
       pose.landmarks,
@@ -186,17 +258,19 @@ export default function PracticePage({ technique, lessonId }: Props) {
     liveEvalRef.current = ev;
     if (ev.score > bestScoreRef.current) bestScoreRef.current = ev.score;
 
-    // Gates drive the hold timer via the 10-frame rolling buffer.
-    // Reset (not fail) on visibility issues — surface "adjust camera" instead.
     if (frame.gates.anyNotVisible) {
       setAdjustCamera(true);
+      setCorrections([]);
       bufferReset();
     } else {
       setAdjustCamera(false);
+      const failingGateIds = frame.gates.results
+        .filter((r) => r.status === "fail")
+        .map((r) => r.id);
+      setCorrections(getCorrections(failingGateIds));
       bufferPush(frame.gates.allPass);
     }
 
-    // Buffer last valid evaluation for "use last capture"
     if (ev.score >= 70) {
       dispatch({ type: "BUFFER", view: state.currentView, evaluation: ev });
     }
@@ -211,14 +285,14 @@ export default function PracticePage({ technique, lessonId }: Props) {
     hands.ready,
     hands.left,
     hands.right,
-    armPosition,
     bufferPush,
     bufferReset,
     variant,
     technique.id,
+    practiceStarted,
+    router,
   ]);
 
-  // Fires when HoldTimer reaches its target — capture this view
   const handleOfficial = useCallback(() => {
     const ev = liveEvalRef.current;
     if (!ev || state.phase !== "holding") return;
@@ -236,7 +310,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
       mode,
     );
     const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
-    if (duration < 10) return; // Don't save very short sessions
+    if (duration < 10) return;
     savePracticeAttempt({
       techniqueId: technique.id,
       score: combined.combinedScore,
@@ -261,234 +335,300 @@ export default function PracticePage({ technique, lessonId }: Props) {
     );
   }, [state.phase, state.captures, plan.length, technique.id]);
 
-  // Reference skeleton is only meaningful on the stance's primary view.
   const activeReference = useMemo(() => {
     if (!showRef || !config) return null;
     if (state.currentView !== config.primaryView) return null;
     return getReferenceSkeleton(technique.id, variant);
   }, [showRef, config, state.currentView, technique.id, variant]);
 
-  // horse-stance (mabu) is the only symmetric stance — others have a distinct front/back leg.
   const isAsymmetric = technique.id !== "horse-stance";
-
-  function toggleReference() {
-    setShowRef((prev) => {
-      const next = !prev;
-      setShowReferenceSkeleton(next);
-      return next;
-    });
-  }
-
-  function flipVariant() {
-    setVariant((prev) =>
-      prev === "left-forward" ? "right-forward" : "left-forward",
-    );
-    variantLockedRef.current = true;
-  }
-
-  const mirrored = pose.facingMode === "user";
-  const backHref = safeBackHref(
-    searchParams?.get("from") ?? null,
-    `/demo/learn/stances/${lessonId}`,
-  );
-  const currentStepIndex = plan.indexOf(state.currentView);
-  const bufferedForCurrent = state.buffered[state.currentView];
 
   function handleRetry() {
     bestScoreRef.current = 0;
     startTimeRef.current = Date.now();
     liveEvalRef.current = null;
     setLiveEval(null);
-    setHandFeedback(null);
     setHandsPaused(false);
     lowFpsSinceRef.current = null;
     bufferReset();
     variantLockedRef.current = false;
     setAdjustCamera(false);
+    setCorrections([]);
+    resetLastSpoken();
     reset(plan);
   }
+  const handleRetryRef = useRef(handleRetry);
+  handleRetryRef.current = handleRetry;
 
-  const handsVisible =
-    handTrackingEnabled &&
-    state.phase !== "results" &&
-    state.phase !== "countdown";
-  const showArmSelector =
-    handsVisible && state.phase === "awaiting" && currentStepIndex === 0;
+  const mirrored = pose.facingMode === "user";
+  const backHref = safeBackHref(
+    searchParams?.get("from") ?? null,
+    `/demo/learn/stances/${lessonId}`,
+  );
+  backHrefRef.current = backHref;
 
-  return (
-    <div className="fixed inset-0 flex flex-col bg-[#080c1a]">
-      <header className="safe-pt safe-px relative z-10 flex items-center gap-3 px-3 py-2">
-        <Link
-          href={backHref}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-card-sm border border-white/10 bg-white/5 px-3 text-sm text-foreground/80 transition-colors hover:text-foreground active:scale-95"
-        >
-          <ArrowLeft size={18} />
-          Back
-        </Link>
+  const currentStepIndex = plan.indexOf(state.currentView);
+  const score = liveEval?.score ?? 0;
 
-        <div className="flex-1 text-center">
-          <h1 className="text-lg font-bold">{technique.english}</h1>
-          <p className="text-sm text-gold font-chinese">{technique.chinese}</p>
+  // ── Setup screen (shown before practice starts) ───────────────────
+  if (!practiceStarted) {
+    return (
+      <>
+        {/* Camera runs in bg for distance check (hidden behind setup overlay) */}
+        <div className="fixed inset-0 bg-[#050B1A]">
+          <CameraView
+            videoRef={pose.videoRef}
+            canvasRef={pose.canvasRef}
+            landmarks={pose.landmarks}
+            mirrored={mirrored}
+            checks={null}
+            config={config}
+            view="front"
+            referenceSkeleton={null}
+          />
         </div>
-
-        <button
-          onClick={toggleReference}
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-card-sm border border-white/10 bg-white/5 px-3 text-sm text-foreground/80 transition-colors hover:text-foreground active:scale-95"
-          aria-label={showRef ? "Hide reference skeleton" : "Show reference skeleton"}
-          aria-pressed={showRef}
-        >
-          {showRef ? <Eye size={18} /> : <EyeOff size={18} />}
-        </button>
-
-        {isAsymmetric && showRef && (
-          <button
-            onClick={flipVariant}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-card-sm border border-white/10 bg-white/5 px-3 text-sm text-foreground/80 transition-colors hover:text-foreground active:scale-95"
-            aria-label="Flip reference stance"
-          >
-            <FlipHorizontal size={18} />
-          </button>
-        )}
-
-        <button
-          onClick={pose.toggleCamera}
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-card-sm border border-white/10 bg-white/5 px-3 text-sm text-foreground/80 transition-colors hover:text-foreground active:scale-95"
-          aria-label="Switch camera"
-        >
-          <SwitchCamera size={18} />
-        </button>
-      </header>
-
-      <div className="relative flex-1">
-        {pose.isLoading && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[#080c1a]">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan border-t-transparent" />
-            <p className="text-sm text-foreground/60">
-              Loading pose detection…
-            </p>
-          </div>
-        )}
-
-        {pose.error && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-[#080c1a] px-6 text-center">
-            <p className="font-medium text-crimson">{pose.error}</p>
-            <p className="max-w-xs text-sm text-foreground/60">
-              Enable camera access in your browser settings, then reload this
-              page. Or go back to the lesson to continue without practice.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="btn-gold"
-              >
-                Reload
-              </button>
-              <Link href={backHref} className="btn-ghost">
-                Back to lesson
-              </Link>
-            </div>
-          </div>
-        )}
-
-        <CameraView
-          videoRef={pose.videoRef}
-          canvasRef={pose.canvasRef}
+        <SetupScreen
+          techniqueName={technique.english}
+          techniqueNameChinese={technique.chinese}
           landmarks={pose.landmarks}
-          mirrored={mirrored}
-          checks={liveEval?.checks ?? null}
-          config={config}
-          view={state.currentView}
-          referenceSkeleton={activeReference}
+          initialConfig={{
+            voiceEnabled: true,
+            audioEnabled: true,
+            showRef: showRef,
+          }}
+          onStart={(cfg) => {
+            setVoiceEnabled(cfg.voiceEnabled);
+            setAudioEnabled(cfg.audioEnabled);
+            setShowRef(cfg.showRef);
+            setShowReferenceSkeleton(cfg.showRef);
+            startTimeRef.current = Date.now();
+            setPracticeStarted(true);
+          }}
+          onBack={() => router.push(backHref)}
         />
+      </>
+    );
+  }
 
-        {/* Top row: view indicator + body visibility */}
-        {!pose.isLoading &&
-          !pose.error &&
-          state.phase !== "results" &&
-          state.phase !== "countdown" && (
-            <div className="pointer-events-none absolute left-0 right-0 top-3 z-10 flex items-start justify-between gap-3 px-3">
-              <ViewIndicator
-                stepIndex={currentStepIndex}
-                totalSteps={plan.length}
-                view={state.currentView}
-                mode={plan.length === 1 ? "quick" : "multi"}
-              />
-              {bodyVisibility && (
-                <BodyVisibilityOverlay visibility={bodyVisibility} />
-              )}
-            </div>
-          )}
+  // ── Practice view ────────────────────────────────────────────────
+  return (
+    <div className="fixed inset-0 bg-[#050B1A]">
+      {/* Loading state */}
+      {pose.isLoading && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-[#050B1A]">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#00D4FF] border-t-transparent" />
+          <p className="font-bold text-white/60" style={{ fontSize: "1.75rem" }}>
+            Loading…
+          </p>
+        </div>
+      )}
 
-        {/* Countdown between views */}
-        {state.phase === "countdown" && (
-          <CountdownOverlay
-            secondsLeft={state.countdownSecs}
-            nextView={state.currentView}
-            onTick={() => dispatch({ type: "COUNTDOWN_TICK" })}
-            onDone={() => dispatch({ type: "COUNTDOWN_DONE" })}
-          />
-        )}
+      {/* Camera error state */}
+      {pose.error && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-[#050B1A] px-6 text-center">
+          <p className="font-bold text-[#FF3355]" style={{ fontSize: "2.5rem" }}>
+            Camera Error
+          </p>
+          <p className="font-semibold text-white/70" style={{ fontSize: "1.75rem" }}>
+            Enable camera access in your browser settings, then reload.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-2xl bg-[#00FF88] px-8 font-black text-black active:scale-95"
+            style={{ fontSize: "2.5rem", padding: "1rem 2rem" }}
+          >
+            Reload
+          </button>
+        </div>
+      )}
 
-        {/* Results */}
-        {state.phase === "results" && finalResult && (
-          <ResultsScreen
-            result={finalResult}
-            techniqueEnglish={technique.english}
-            techniqueChinese={technique.chinese}
-            onRetry={handleRetry}
-            backHref={backHref}
-          />
-        )}
+      {/* Camera + skeleton overlay */}
+      <CameraView
+        videoRef={pose.videoRef}
+        canvasRef={pose.canvasRef}
+        landmarks={pose.landmarks}
+        mirrored={mirrored}
+        checks={liveEval?.checks ?? null}
+        config={config}
+        view={state.currentView}
+        referenceSkeleton={activeReference}
+      />
 
-        {/* "Use last capture" option while awaiting a view we already have buffered */}
-        {state.phase === "awaiting" &&
-          bufferedForCurrent &&
-          !state.captures[state.currentView] && (
-            <div className="pointer-events-auto absolute left-1/2 top-20 z-20 -translate-x-1/2 rounded-card-sm border border-cyan/30 bg-[#080c1a]/90 backdrop-blur-md">
-              <button
-                onClick={() =>
-                  dispatch({ type: "USE_BUFFERED", view: state.currentView })
-                }
-                className="inline-flex min-h-11 items-center px-4 text-sm font-semibold text-cyan active:scale-95"
-              >
-                Use last reading (score {bufferedForCurrent.score}) →
-              </button>
-            </div>
-          )}
-
-        {/* Arm position selector (first step, hand tracking on) */}
-        {showArmSelector && (
-          <div className="pointer-events-none absolute left-1/2 top-24 z-20 -translate-x-1/2">
-            <ArmPositionSelector value={armPosition} onChange={setArmPosition} />
-          </div>
-        )}
-
-        {/* Feedback panel */}
-        {state.phase !== "results" && state.phase !== "countdown" && (
-          <div className="safe-pb absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-2 p-3 sm:p-4">
-            <FeedbackPanel
-              evaluation={liveEval}
-              holdSeconds={2}
-              onOfficial={handleOfficial}
-              holding={bufferStatus.allPass}
-              adjustCamera={adjustCamera}
+      {/* ── TOP BAR ──────────────────────────────────────────────── */}
+      {state.phase !== "results" && state.phase !== "countdown" && (
+        <div className="absolute left-0 right-0 top-0 z-10 flex items-start gap-4 px-4 pt-4">
+          {/* Stance name */}
+          <div className="flex-1 min-w-0">
+            <p
+              className="font-black text-white leading-none truncate"
+              style={{ fontSize: "3.5rem" }}
             >
-              {handsVisible && (
-                <HandFeedbackRow
-                  feedback={handFeedback}
-                  paused={handsPaused}
-                />
-              )}
-            </FeedbackPanel>
-            <Disclaimer
-              variant="compact"
-              className="px-2"
-              includeHands={handTrackingEnabled}
-            />
+              {technique.english.toUpperCase()}
+            </p>
+            <p
+              className="font-bold text-[#FFD700] font-chinese leading-none"
+              style={{ fontSize: "2.5rem" }}
+            >
+              {technique.chinese}
+            </p>
           </div>
-        )}
-      </div>
+
+          {/* Perspective + step indicator */}
+          <div className="flex-shrink-0 text-right">
+            <p
+              className="font-black uppercase text-[#00D4FF] leading-none"
+              style={{ fontSize: "2.5rem" }}
+            >
+              {state.currentView === "front" ? "FRONT" : "SIDE"}
+            </p>
+            {plan.length > 1 && (
+              <p
+                className="font-bold text-white/50 leading-none"
+                style={{ fontSize: "1.75rem" }}
+              >
+                {currentStepIndex + 1} / {plan.length}
+              </p>
+            )}
+          </div>
+
+          {/* Camera switch + ref/flip (compact, top-right corner) */}
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <button
+              onClick={pose.toggleCamera}
+              className="h-14 w-14 rounded-2xl border border-white/20 bg-black/50 flex items-center justify-center text-white/70 active:scale-95"
+              aria-label="Switch camera"
+              style={{ fontSize: "1.5rem" }}
+            >
+              ⇄
+            </button>
+            <button
+              onClick={() => {
+                setShowRef((p) => { setShowReferenceSkeleton(!p); return !p; });
+              }}
+              className="h-14 w-14 rounded-2xl border border-white/20 bg-black/50 flex items-center justify-center active:scale-95"
+              aria-label={showRef ? "Hide reference" : "Show reference"}
+              style={{ fontSize: "1.5rem", color: showRef ? "#00D4FF" : "rgba(255,255,255,0.4)" }}
+            >
+              👻
+            </button>
+            {isAsymmetric && showRef && (
+              <button
+                onClick={() => {
+                  setVariant((p) => p === "left-forward" ? "right-forward" : "left-forward");
+                  variantLockedRef.current = true;
+                }}
+                className="h-14 w-14 rounded-2xl border border-white/20 bg-black/50 flex items-center justify-center text-white/60 active:scale-95"
+                aria-label="Flip reference stance"
+                style={{ fontSize: "1.5rem" }}
+              >
+                ↔
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── CORRECTION TEXT (center of screen) ───────────────────── */}
+      {state.phase !== "results" && state.phase !== "countdown" && (
+        <div className="absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 pointer-events-none">
+          {adjustCamera ? (
+            <div className="flex items-center justify-center px-4">
+              <span
+                className="text-center font-black uppercase tracking-wider"
+                style={{
+                  fontSize: "3.5rem",
+                  color: "#FFD700",
+                  textShadow: "0 2px 24px rgba(255,215,0,0.5)",
+                }}
+              >
+                ADJUST CAMERA
+              </span>
+            </div>
+          ) : corrections.length > 0 && !bufferStatus.allPass ? (
+            <CorrectionDisplay
+              corrections={corrections}
+              ttsEnabled={audioEnabled && voiceEnabled}
+            />
+          ) : bufferStatus.allPass ? (
+            <div className="flex items-center justify-center">
+              <span
+                className="font-black uppercase tracking-wider text-center"
+                style={{
+                  fontSize: "3.5rem",
+                  color: "#00FF88",
+                  textShadow: "0 0 30px rgba(0,255,136,0.6)",
+                }}
+              >
+                HOLD IT!
+              </span>
+            </div>
+          ) : !liveEval ? (
+            <div className="flex items-center justify-center">
+              <span
+                className="font-bold text-white/40 text-center"
+                style={{ fontSize: "2.5rem" }}
+              >
+                STEP INTO FRAME
+              </span>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* ── CIRCULAR HOLD TIMER (bottom center) ──────────────────── */}
+      {state.phase !== "results" && state.phase !== "countdown" && (
+        <div className="absolute bottom-6 inset-x-0 z-10 flex flex-col items-center gap-3">
+          <CircularHoldTimer
+            holding={bufferStatus.allPass}
+            target={2}
+            score={score}
+            onOfficial={handleOfficial}
+          />
+          {/* Mic indicator */}
+          {voiceEnabled && (
+            <div className="flex items-center gap-2">
+              <div
+                className="h-3 w-3 rounded-full animate-pulse"
+                style={{ background: "#00D4FF" }}
+              />
+              <span
+                className="font-semibold text-white/50"
+                style={{ fontSize: "1.75rem" }}
+              >
+                Listening
+              </span>
+            </div>
+          )}
+          {/* Gesture hint */}
+          <p
+            className="font-semibold text-white/30 text-center px-4"
+            style={{ fontSize: "1.75rem" }}
+          >
+            ✋ Arms up 1s = exit · ✖ Cross arms 1s = score
+          </p>
+        </div>
+      )}
+
+      {/* ── COUNTDOWN OVERLAY ────────────────────────────────────── */}
+      {state.phase === "countdown" && (
+        <CountdownOverlay
+          secondsLeft={state.countdownSecs}
+          nextView={state.currentView}
+          onTick={() => dispatch({ type: "COUNTDOWN_TICK" })}
+          onDone={() => dispatch({ type: "COUNTDOWN_DONE" })}
+        />
+      )}
+
+      {/* ── RESULTS ──────────────────────────────────────────────── */}
+      {state.phase === "results" && finalResult && (
+        <ResultsScreen
+          result={finalResult}
+          techniqueEnglish={technique.english}
+          techniqueChinese={technique.chinese}
+          onRetry={handleRetry}
+          backHref={backHref}
+        />
+      )}
     </div>
   );
 }

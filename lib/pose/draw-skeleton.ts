@@ -1,6 +1,7 @@
 import type { PoseLandmark, CheckStatus } from "./types";
 
-export const REFERENCE_SKELETON_COLOR = "rgba(34, 211, 238, 0.4)";
+// 60% opacity brand cyan — increased from 40% for visibility at practice distance.
+export const REFERENCE_SKELETON_COLOR = "rgba(0, 212, 255, 0.6)";
 
 /** MediaPipe Pose connection pairs for drawing the skeleton */
 const CONNECTIONS: [number, number][] = [
@@ -42,12 +43,13 @@ const CONNECTIONS: [number, number][] = [
 /** Landmark indices involved in body evaluation — drawn larger */
 const EVAL_LANDMARKS = new Set([11, 12, 23, 24, 25, 26, 27, 28, 31, 32]);
 
+// High-saturation colors for 2–3 m viewing distance (practice view only).
 const COLORS = {
-  green: "#22c55e",
-  yellow: "#d4a030",
-  red: "#e85d4a",
-  connection: "rgba(0, 180, 230, 0.4)",
-  default: "rgba(0, 180, 230, 0.8)",
+  green:      "#00FF88",
+  yellow:     "#FFD700",
+  red:        "#FF3355",
+  connection: "rgba(0, 212, 255, 0.35)",
+  default:    "rgba(0, 212, 255, 0.9)",
 } as const;
 
 export function drawSkeleton(
@@ -59,7 +61,7 @@ export function drawSkeleton(
   landmarkColors: Map<number, CheckStatus> | null,
 ): void {
   // Draw connections first
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.strokeStyle = COLORS.connection;
   for (const [i, j] of CONNECTIONS) {
     if (i >= landmarks.length || j >= landmarks.length) continue;
@@ -87,7 +89,7 @@ export function drawSkeleton(
     const y = lm.y * height;
 
     const isEval = EVAL_LANDMARKS.has(i);
-    const radius = isEval ? 5 : 3;
+    const radius = isEval ? 7 : 4;
     const status = landmarkColors?.get(i);
     const color = status ? COLORS[status] : COLORS.default;
 
@@ -143,7 +145,7 @@ export function drawReferenceSkeleton(
   ctx.save();
   ctx.strokeStyle = REFERENCE_SKELETON_COLOR;
   ctx.fillStyle = REFERENCE_SKELETON_COLOR;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
 
   for (const [i, j] of CONNECTIONS) {
     if (i >= reference.length || j >= reference.length) continue;
@@ -162,7 +164,7 @@ export function drawReferenceSkeleton(
     const lm = reference[i];
     if ((lm.visibility ?? 0) < 0.5) continue;
     const p = project(lm);
-    const radius = EVAL_LANDMARKS.has(i) ? 4 : 2;
+    const radius = EVAL_LANDMARKS.has(i) ? 6 : 3;
     ctx.beginPath();
     ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
     ctx.fill();
