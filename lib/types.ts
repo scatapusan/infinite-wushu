@@ -31,6 +31,8 @@ export type Technique = {
   sort_order: number;
   video_url: string | null;
   reference_angles: Record<string, unknown> | null;
+  /** For form movements: stance scoring config to reuse ("horse-stance" etc.). Null = non-scored info movement. */
+  stance_ref?: string | null;
 };
 
 export type QuizQuestion = {

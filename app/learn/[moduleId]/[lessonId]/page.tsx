@@ -10,6 +10,8 @@ import {
 } from "@/lib/db";
 import Header from "@/components/Header";
 import TechniqueCard from "@/components/TechniqueCard";
+import PracticeFullFormButton from "@/components/PracticeFullFormButton";
+import { isFormLesson } from "@/lib/pose/form-lookup";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +79,14 @@ export default async function LessonPage({
               </p>
             )}
           </div>
+
+          {/* Full-form practice entry (for form lessons only) */}
+          {isFormLesson(params.lessonId) && (
+            <PracticeFullFormButton
+              lessonId={params.lessonId}
+              backHref={`/learn/${params.moduleId}/${params.lessonId}`}
+            />
+          )}
 
           {/* Techniques */}
           {techniques.length === 0 ? (

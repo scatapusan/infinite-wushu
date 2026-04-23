@@ -3,12 +3,14 @@ import Link from "next/link";
 import { ChevronLeft, LogIn, ClipboardCheck, BookOpen } from "lucide-react";
 import Header from "@/components/Header";
 import TechniqueCard from "@/components/TechniqueCard";
+import PracticeFullFormButton from "@/components/PracticeFullFormButton";
 import {
   DEMO_MODULES,
   DEMO_LESSONS,
   DEMO_TECHNIQUES,
   DEMO_QUIZZES,
 } from "@/lib/demo-data";
+import { isFormLesson } from "@/lib/pose/form-lookup";
 
 export default function DemoLessonPage({
   params,
@@ -57,6 +59,14 @@ export default function DemoLessonPage({
               </p>
             )}
           </div>
+
+          {/* Full-form practice entry (for form lessons only) */}
+          {isFormLesson(params.lessonId) && (
+            <PracticeFullFormButton
+              lessonId={params.lessonId}
+              backHref={`/demo/learn/${params.moduleId}/${params.lessonId}`}
+            />
+          )}
 
           {/* Techniques */}
           {techniques.length === 0 ? (
