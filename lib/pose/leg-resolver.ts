@@ -1,6 +1,10 @@
 import type { PoseLandmark } from "./types";
 import type { LegAssignment } from "./stance-gates";
-import { calculateAngle } from "./angle-utils";
+import {
+  classifyLegs,
+  getClassifierConfig,
+  type LegClassification,
+} from "./leg-classifier";
 
 /**
  * Which leg is the "forward" one in asymmetric stances.
@@ -42,50 +46,48 @@ export function legAssignmentFor(variant: StanceVariant): LegAssignment {
 }
 
 /**
- * Simple classifier — detects which side of the body is "forward" (or "bent")
- * based on a per-stance rule. Returns null if the pose can't be classified yet.
+ * Classify the forward side for an asymmetric stance.
  *
- *   bow-stance:   front = bent leg (smaller knee angle).
- *   crouch-stance: bent = smaller angle, extended = larger.
- *   empty-stance: back  = more-bent leg (smaller angle); front = straighter.
- *   rest-stance:  back  = leg with heel lifted (heel.y < foot_index.y); front = planted.
+ * Delegates to the authoritative `leg-classifier` module. Returns null when:
+ *   - the stance is symmetric (horse-stance) and defaults to left-forward
+ *   - the stanceId is unknown to the classifier
+ *   - confidence is below the minimum threshold (ambiguous pose)
+ *
+ * Symmetric stances return "left-forward" for consistency with historical behavior.
  */
 export function classifyVariant(
   landmarks: PoseLandmark[],
   stanceId: string,
 ): StanceVariant | null {
-  const requiredVisible = (idx: number) => (landmarks[idx]?.visibility ?? 0) >= 0.5;
+  if (stanceId === "horse-stance") return "left-forward";
 
-  if (stanceId === "horse-stance") return "left-forward"; // symmetric; arbitrary
+  const config = getClassifierConfig(stanceId);
+  if (!config) return "left-forward"; // unknown stance — fall back to default
 
-  if (stanceId === "rest-stance") {
-    if (![29, 30, 31, 32].every(requiredVisible)) return null;
-    const lHeel = landmarks[29];
-    const rHeel = landmarks[30];
-    const lToe = landmarks[31];
-    const rToe = landmarks[32];
-    const lHeelUp = lHeel.y < lToe.y - 0.01;
-    const rHeelUp = rHeel.y < rToe.y - 0.01;
-    if (lHeelUp && !rHeelUp) return "right-forward"; // left is the back/crossed leg
-    if (rHeelUp && !lHeelUp) return "left-forward";
-    return null; // ambiguous
+  const result = classifyLegs(landmarks, config, stanceId);
+  if (result.ambiguous) return null;
+
+  if (config.stanceType === "bent-extended") {
+    // Crouch (pubu) — "left-forward" in the legacy scheme means left leg is the
+    // BENT leg. See LEFT_FORWARD.bent_* mappings above.
+    return result.left === "bent" ? "left-forward" : "right-forward";
   }
 
-  // Knee-angle-based classifiers (bow, crouch, empty).
-  if (![23, 24, 25, 26, 27, 28].every(requiredVisible)) return null;
-  const lAngle = calculateAngle(landmarks[23], landmarks[25], landmarks[27]);
-  const rAngle = calculateAngle(landmarks[24], landmarks[26], landmarks[28]);
-  const diff = Math.abs(lAngle - rAngle);
-  if (diff < 15) return null; // too close to reliably pick
+  // front-back stances (bow, empty, rest):
+  // legacy "left-forward" means left leg is the front leg.
+  return result.left === "front" ? "left-forward" : "right-forward";
+}
 
-  if (stanceId === "bow-stance" || stanceId === "crouch-stance") {
-    // Front / bent leg is the more-bent (smaller angle) side.
-    return lAngle < rAngle ? "left-forward" : "right-forward";
-  }
-  if (stanceId === "empty-stance") {
-    // Back leg is more bent; front leg is the straighter side.
-    return lAngle > rAngle ? "left-forward" : "right-forward";
-  }
-
-  return "left-forward";
+/**
+ * Lower-level accessor for callers that want the full classification (confidence,
+ * per-method breakdown, etc.) rather than the reduced StanceVariant.
+ */
+export function classifyVariantDetailed(
+  landmarks: PoseLandmark[],
+  stanceId: string,
+): LegClassification | null {
+  if (stanceId === "horse-stance") return null;
+  const config = getClassifierConfig(stanceId);
+  if (!config) return null;
+  return classifyLegs(landmarks, config, stanceId);
 }

@@ -23,6 +23,7 @@ import {
   isHandTrackingEnabled,
   showReferenceSkeleton,
   setShowReferenceSkeleton,
+  showLegClassifierDebug,
 } from "@/lib/preferences";
 import {
   classifyVariant,
@@ -58,6 +59,7 @@ import FormCompleteScreen from "@/components/practice/FormCompleteScreen";
 import FormMovementInfoCard from "@/components/practice/FormMovementInfoCard";
 import FormPausedOverlay from "@/components/practice/FormPausedOverlay";
 import FormExitConfirm from "@/components/practice/FormExitConfirm";
+import LegClassifierDebugOverlay from "@/components/practice/LegClassifierDebugOverlay";
 
 type Props = {
   meta: FormLessonMeta;
@@ -114,6 +116,7 @@ export default function PracticeFormPage({ meta, movements }: Props) {
   const [showSkipHint, setShowSkipHint] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const lastPoseActivityRef = useRef<number>(Date.now());
+  const [debugLegClassifier, setDebugLegClassifier] = useState(false);
 
   // ── Hand tracking ─────────────────────────────────────────────────
   const [handTrackingEnabled] = useState(() =>
@@ -137,6 +140,7 @@ export default function PracticeFormPage({ meta, movements }: Props) {
   // Read prefs on mount
   useEffect(() => {
     setShowRef(showReferenceSkeleton());
+    setDebugLegClassifier(showLegClassifierDebug());
   }, []);
   useEffect(() => {
     setSfxEnabled(audioEnabled);
@@ -600,6 +604,16 @@ export default function PracticeFormPage({ meta, movements }: Props) {
         view={setupCameraView}
         referenceSkeleton={activeReference}
       />
+
+      {/* Dev-only leg classifier overlay */}
+      {debugLegClassifier && (
+        <div className="absolute bottom-4 left-4 z-20 max-w-sm">
+          <LegClassifierDebugOverlay
+            landmarks={pose.landmarks}
+            stanceId={currentMovement?.stanceRef ?? null}
+          />
+        </div>
+      )}
 
       {/* TOP BAR — progress + movement name (only during practicing) */}
       {state.phase === "practicing" && currentMovement && (

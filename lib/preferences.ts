@@ -3,6 +3,7 @@
 const QUICK_MODE_KEY = "wuxue:quick-mode";
 const HAND_TRACKING_KEY = "wuxue:hand-tracking";
 const SHOW_REFERENCE_KEY = "wuxue:show-reference";
+const LEG_CLASSIFIER_DEBUG_KEY = "wuxue:leg-classifier-debug";
 
 function isMobileUA(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -59,4 +60,16 @@ export function showReferenceSkeleton(): boolean {
 export function setShowReferenceSkeleton(enabled: boolean): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(SHOW_REFERENCE_KEY, enabled ? "1" : "0");
+}
+
+/** Dev-only leg classifier debug overlay. Default OFF. */
+export function showLegClassifierDebug(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(LEG_CLASSIFIER_DEBUG_KEY) === "1";
+}
+
+export function setLegClassifierDebug(enabled: boolean): void {
+  if (typeof window === "undefined") return;
+  if (enabled) window.localStorage.setItem(LEG_CLASSIFIER_DEBUG_KEY, "1");
+  else window.localStorage.removeItem(LEG_CLASSIFIER_DEBUG_KEY);
 }

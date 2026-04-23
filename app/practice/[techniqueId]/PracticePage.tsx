@@ -27,6 +27,7 @@ import {
   isHandTrackingEnabled,
   showReferenceSkeleton,
   setShowReferenceSkeleton,
+  showLegClassifierDebug,
 } from "@/lib/preferences";
 import {
   useFlowReducer,
@@ -51,6 +52,7 @@ import ResultsScreen from "@/components/practice/ResultsScreen";
 import CircularHoldTimer from "@/components/practice/CircularHoldTimer";
 import CorrectionDisplay from "@/components/practice/CorrectionDisplay";
 import SetupScreen from "@/components/practice/SetupScreen";
+import LegClassifierDebugOverlay from "@/components/practice/LegClassifierDebugOverlay";
 
 type Props = {
   technique: Technique;
@@ -122,9 +124,11 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
   const { state, dispatch, reset } = useFlowReducer(plan);
 
+  const [debugLegClassifier, setDebugLegClassifier] = useState(false);
   // Read prefs on mount
   useEffect(() => {
     setShowRef(showReferenceSkeleton());
+    setDebugLegClassifier(showLegClassifierDebug());
   }, []);
   useEffect(() => { reset(plan); }, [plan, reset]);
 
@@ -466,6 +470,16 @@ export default function PracticePage({ technique, lessonId }: Props) {
         view={state.currentView}
         referenceSkeleton={activeReference}
       />
+
+      {/* Dev-only leg classifier overlay */}
+      {debugLegClassifier && (
+        <div className="absolute bottom-4 left-4 z-20 max-w-sm">
+          <LegClassifierDebugOverlay
+            landmarks={pose.landmarks}
+            stanceId={technique.id}
+          />
+        </div>
+      )}
 
       {/* ── TOP BAR ──────────────────────────────────────────────── */}
       {state.phase !== "results" && state.phase !== "countdown" && (
