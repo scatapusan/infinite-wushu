@@ -1,4 +1,5 @@
 import { DEMO_TECHNIQUES } from "@/lib/demo-data";
+import type { AttributionLevel } from "@/lib/types";
 
 export type VocabCategory =
   | "stance"
@@ -19,6 +20,11 @@ export type VocabWord = {
   relatedModuleId?: string;
   relatedLessonId?: string;
   relatedTechniqueName?: string;
+  /** Required — every vocabulary item must declare a trust level. */
+  attribution: AttributionLevel;
+  source?: string | null;
+  sourceUrl?: string | null;
+  sourceNotes?: string | null;
 };
 
 export const VOCAB_CATEGORIES: {
@@ -44,30 +50,32 @@ const MODULE_TO_CATEGORY: Record<string, VocabCategory> = {
   conditioning: "general",
 };
 
+const SEED_ATTR = { attribution: "community" as const, source: "Standard wushu terminology" };
+
 // Hand-authored seed words (commands, directions, body parts).
 const SEED_WORDS: VocabWord[] = [
   // Commands
-  { id: "cmd-yubei", chinese: "预备", pinyin: "yùbèi", english: "Ready / Prepare", category: "command" },
-  { id: "cmd-kaishi", chinese: "开始", pinyin: "kāishǐ", english: "Begin", category: "command" },
-  { id: "cmd-ting", chinese: "停", pinyin: "tíng", english: "Stop", category: "command" },
-  { id: "cmd-shoushi", chinese: "收势", pinyin: "shōushì", english: "Closing form", category: "command" },
-  { id: "cmd-jingli", chinese: "敬礼", pinyin: "jìnglǐ", english: "Salute / Bow", category: "command" },
+  { id: "cmd-yubei", chinese: "预备", pinyin: "yùbèi", english: "Ready / Prepare", category: "command", ...SEED_ATTR },
+  { id: "cmd-kaishi", chinese: "开始", pinyin: "kāishǐ", english: "Begin", category: "command", ...SEED_ATTR },
+  { id: "cmd-ting", chinese: "停", pinyin: "tíng", english: "Stop", category: "command", ...SEED_ATTR },
+  { id: "cmd-shoushi", chinese: "收势", pinyin: "shōushì", english: "Closing form", category: "command", ...SEED_ATTR },
+  { id: "cmd-jingli", chinese: "敬礼", pinyin: "jìnglǐ", english: "Salute / Bow", category: "command", ...SEED_ATTR },
   // Directions
-  { id: "dir-zuo", chinese: "左", pinyin: "zuǒ", english: "Left", category: "direction" },
-  { id: "dir-you", chinese: "右", pinyin: "yòu", english: "Right", category: "direction" },
-  { id: "dir-qian", chinese: "前", pinyin: "qián", english: "Forward", category: "direction" },
-  { id: "dir-hou", chinese: "后", pinyin: "hòu", english: "Back", category: "direction" },
-  { id: "dir-shang", chinese: "上", pinyin: "shàng", english: "Up", category: "direction" },
-  { id: "dir-xia", chinese: "下", pinyin: "xià", english: "Down", category: "direction" },
+  { id: "dir-zuo", chinese: "左", pinyin: "zuǒ", english: "Left", category: "direction", ...SEED_ATTR },
+  { id: "dir-you", chinese: "右", pinyin: "yòu", english: "Right", category: "direction", ...SEED_ATTR },
+  { id: "dir-qian", chinese: "前", pinyin: "qián", english: "Forward", category: "direction", ...SEED_ATTR },
+  { id: "dir-hou", chinese: "后", pinyin: "hòu", english: "Back", category: "direction", ...SEED_ATTR },
+  { id: "dir-shang", chinese: "上", pinyin: "shàng", english: "Up", category: "direction", ...SEED_ATTR },
+  { id: "dir-xia", chinese: "下", pinyin: "xià", english: "Down", category: "direction", ...SEED_ATTR },
   // Body parts
-  { id: "bp-quan", chinese: "拳", pinyin: "quán", english: "Fist", category: "body_part" },
-  { id: "bp-zhang", chinese: "掌", pinyin: "zhǎng", english: "Palm", category: "body_part" },
-  { id: "bp-tui", chinese: "腿", pinyin: "tuǐ", english: "Leg", category: "body_part" },
-  { id: "bp-jiao", chinese: "脚", pinyin: "jiǎo", english: "Foot", category: "body_part" },
-  { id: "bp-xi", chinese: "膝", pinyin: "xī", english: "Knee", category: "body_part" },
-  { id: "bp-yao", chinese: "腰", pinyin: "yāo", english: "Waist", category: "body_part" },
-  { id: "bp-jian", chinese: "肩", pinyin: "jiān", english: "Shoulder", category: "body_part" },
-  { id: "bp-zhou", chinese: "肘", pinyin: "zhǒu", english: "Elbow", category: "body_part" },
+  { id: "bp-quan", chinese: "拳", pinyin: "quán", english: "Fist", category: "body_part", ...SEED_ATTR },
+  { id: "bp-zhang", chinese: "掌", pinyin: "zhǎng", english: "Palm", category: "body_part", ...SEED_ATTR },
+  { id: "bp-tui", chinese: "腿", pinyin: "tuǐ", english: "Leg", category: "body_part", ...SEED_ATTR },
+  { id: "bp-jiao", chinese: "脚", pinyin: "jiǎo", english: "Foot", category: "body_part", ...SEED_ATTR },
+  { id: "bp-xi", chinese: "膝", pinyin: "xī", english: "Knee", category: "body_part", ...SEED_ATTR },
+  { id: "bp-yao", chinese: "腰", pinyin: "yāo", english: "Waist", category: "body_part", ...SEED_ATTR },
+  { id: "bp-jian", chinese: "肩", pinyin: "jiān", english: "Shoulder", category: "body_part", ...SEED_ATTR },
+  { id: "bp-zhou", chinese: "肘", pinyin: "zhǒu", english: "Elbow", category: "body_part", ...SEED_ATTR },
 ];
 
 // Map technique lesson_id back to its module id by scanning DEMO_LESSONS would require
@@ -101,6 +109,10 @@ const TECHNIQUE_WORDS: VocabWord[] = Object.values(DEMO_TECHNIQUES)
       relatedLessonId: t.lesson_id,
       relatedModuleId: moduleId,
       relatedTechniqueName: t.english,
+      // Vocabulary attribution is always 'community' — these are standard wushu terms.
+      // The video/content source attribution lives on the Technique itself.
+      attribution: "community" as const,
+      source: "Standard wushu terminology",
     };
   });
 

@@ -55,5 +55,7 @@ export function getFormMovements(lessonId: string): SequencedMovement[] {
       description: t.description,
       keyPoints: t.key_points ?? [],
       stanceRef: t.stance_ref ?? null,
+      source: t.source ?? null,
+      attribution: t.attribution ?? null,
     }));
 }

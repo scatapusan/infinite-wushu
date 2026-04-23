@@ -3,6 +3,7 @@
 import { useReducer, useCallback } from "react";
 import type { CameraView } from "./types";
 import type { StanceVariant } from "./leg-resolver";
+import type { AttributionLevel } from "@/lib/types";
 
 /**
  * Phases of a guided form carousel:
@@ -92,6 +93,8 @@ export type SequencedMovement = {
   description: string | null;
   keyPoints: string[];
   stanceRef: string | null;
+  source?: string | null;
+  attribution?: AttributionLevel | null;
 };
 
 export function initialFormFlowState(): FormFlowState {

@@ -1,3 +1,11 @@
+/** Trust level for a content item's source. */
+export type AttributionLevel =
+  | "iwuf-official"
+  | "iwuf-aligned"
+  | "community"
+  | "internal"
+  | "unattributed";
+
 export type Module = {
   id: string;
   title_zh: string;
@@ -33,6 +41,14 @@ export type Technique = {
   reference_angles: Record<string, unknown> | null;
   /** For form movements: stance scoring config to reuse ("horse-stance" etc.). Null = non-scored info movement. */
   stance_ref?: string | null;
+  /** Human-readable source name (video title, textbook, etc.). */
+  source?: string | null;
+  /** Canonical URL for the source (YouTube video, document, etc.). */
+  sourceUrl?: string | null;
+  /** Trust level of the content source. */
+  attribution?: AttributionLevel | null;
+  /** Extra context: credentials, timestamps, caveats. */
+  sourceNotes?: string | null;
 };
 
 export type QuizQuestion = {

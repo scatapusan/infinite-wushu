@@ -3,6 +3,7 @@ import { Check, AlertTriangle, Camera } from "lucide-react";
 import type { Technique } from "@/lib/types";
 import VideoPlayer from "@/components/VideoPlayer";
 import SpeakButton from "@/components/SpeakButton";
+import SourceAttribution from "@/components/SourceAttribution";
 import { PRACTICABLE_IDS } from "@/lib/pose/technique-lookup";
 
 type Props = {
@@ -80,6 +81,9 @@ export default function TechniqueCard({ technique: t, backHref }: Props) {
           </ul>
         </div>
       )}
+
+      {/* Source attribution */}
+      <SourceAttribution attribution={t.attribution} source={t.source} />
 
       {/* Practice button — only for stances with pose detection configs */}
       {PRACTICABLE_IDS.includes(t.id) && (

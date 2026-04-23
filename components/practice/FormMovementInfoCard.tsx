@@ -1,6 +1,7 @@
 "use client";
 
 import type { SequencedMovement } from "@/lib/pose/form-flow-machine";
+import SourceAttribution from "@/components/SourceAttribution";
 
 type Props = {
   movement: SequencedMovement;
@@ -56,6 +57,10 @@ export default function FormMovementInfoCard({ movement, onContinue }: Props) {
               </li>
             ))}
           </ul>
+        )}
+
+        {movement.attribution && (
+          <SourceAttribution attribution={movement.attribution} source={movement.source} />
         )}
 
         <button
