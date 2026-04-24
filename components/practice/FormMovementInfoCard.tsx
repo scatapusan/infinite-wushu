@@ -65,7 +65,7 @@ export default function FormMovementInfoCard({ movement, onContinue }: Props) {
 
         <button
           onClick={onContinue}
-          className="w-full rounded-3xl bg-[#22D3EE] font-black uppercase tracking-widest text-black active:scale-[0.97]"
+          className="w-full rounded-3xl bg-[#00D4FF] font-black uppercase tracking-widest text-black active:scale-[0.97]"
           style={{ height: "6rem", fontSize: "2.5rem" }}
         >
           Continue →

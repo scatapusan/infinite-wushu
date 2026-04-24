@@ -47,7 +47,7 @@ export default function HoldTimer({ holding, target = 2, onOfficial }: Props) {
         Hold
       </p>
       <p
-        className={`text-2xl font-bold tabular-nums ${met ? "text-[#22c55e]" : "text-foreground/80"}`}
+        className={`text-2xl font-bold tabular-nums ${met ? "text-[#00FF88]" : "text-foreground/80"}`}
       >
         {display}s
       </p>

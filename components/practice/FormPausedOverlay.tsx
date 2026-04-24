@@ -23,7 +23,7 @@ export default function FormPausedOverlay({ onResume, onExit }: Props) {
       <div className="flex flex-col gap-3 w-full max-w-md">
         <button
           onClick={onResume}
-          className="w-full rounded-3xl bg-[#22D3EE] font-black uppercase tracking-widest text-black active:scale-[0.97]"
+          className="w-full rounded-3xl bg-[#00D4FF] font-black uppercase tracking-widest text-black active:scale-[0.97]"
           style={{ height: "6rem", fontSize: "2.5rem" }}
         >
           RESUME

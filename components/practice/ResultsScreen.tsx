@@ -16,7 +16,7 @@ type Props = {
 };
 
 const TEXT_CLASS = {
-  green: "text-[#22c55e]",
+  green: "text-[#00FF88]",
   yellow: "text-gold",
   red: "text-crimson",
 } as const;
@@ -30,7 +30,7 @@ export default function ResultsScreen({
   includeHands,
 }: Props) {
   const badgeClasses = result.verified
-    ? "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]"
+    ? "border-[#00FF88]/40 bg-[#00FF88]/10 text-[#00FF88]"
     : "border-gold/40 bg-gold/10 text-gold";
   const badgeLabel = result.verified ? "Verified" : "Preliminary";
   const BadgeIcon = result.verified ? CheckCircle : AlertCircle;
@@ -83,14 +83,14 @@ export default function ResultsScreen({
                   </p>
                   <p
                     className={`font-mono font-bold ${
-                      ev.score >= 70 ? "text-[#22c55e]" : "text-crimson"
+                      ev.score >= 70 ? "text-[#00FF88]" : "text-crimson"
                     }`}
                   >
                     {ev.score}
                   </p>
                 </div>
                 {failures.length === 0 ? (
-                  <p className="text-xs text-[#22c55e]">All checks passed</p>
+                  <p className="text-xs text-[#00FF88]">All checks passed</p>
                 ) : (
                   <ul className="space-y-1 text-xs">
                     {failures.map((f) => (

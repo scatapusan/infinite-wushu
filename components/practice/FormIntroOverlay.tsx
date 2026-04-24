@@ -107,7 +107,7 @@ export default function FormIntroOverlay({
       <div className="flex flex-col items-center gap-3">
         <button
           onClick={onSkip}
-          className="rounded-2xl bg-[#22D3EE] px-8 py-4 font-black uppercase tracking-widest text-black active:scale-95"
+          className="rounded-2xl bg-[#00D4FF] px-8 py-4 font-black uppercase tracking-widest text-black active:scale-95"
           style={{ fontSize: "2rem" }}
         >
           START NOW

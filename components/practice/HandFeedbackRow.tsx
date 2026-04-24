@@ -8,13 +8,13 @@ type Props = {
 };
 
 const DOT_CLASS = {
-  green: "bg-[#22c55e]",
+  green: "bg-[#00FF88]",
   yellow: "bg-gold",
   red: "bg-crimson",
 } as const;
 
 const TEXT_CLASS = {
-  green: "text-[#22c55e]",
+  green: "text-[#00FF88]",
   yellow: "text-gold",
   red: "text-crimson",
 } as const;

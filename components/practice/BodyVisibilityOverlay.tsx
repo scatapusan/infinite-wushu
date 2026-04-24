@@ -10,9 +10,9 @@ type Props = {
 export default function BodyVisibilityOverlay({ visibility }: Props) {
   if (visibility.ready) {
     return (
-      <div className="flex items-center gap-2 rounded-card-sm border border-[#22c55e]/30 bg-[#22c55e]/10 px-3 py-2">
-        <CheckCircle size={14} className="text-[#22c55e] shrink-0" />
-        <span className="text-xs font-semibold text-[#22c55e]">
+      <div className="flex items-center gap-2 rounded-card-sm border border-[#00FF88]/30 bg-[#00FF88]/10 px-3 py-2">
+        <CheckCircle size={14} className="text-[#00FF88] shrink-0" />
+        <span className="text-xs font-semibold text-[#00FF88]">
           Ready — full body detected
         </span>
       </div>
@@ -35,7 +35,7 @@ export default function BodyVisibilityOverlay({ visibility }: Props) {
             ? "bg-crimson/15 text-crimson"
             : !p.confident
               ? "bg-gold/15 text-gold"
-              : "bg-[#22c55e]/15 text-[#22c55e]";
+              : "bg-[#00FF88]/15 text-[#00FF88]";
           const icon = !p.detected ? "✗" : !p.confident ? "~" : "✓";
           return (
             <span

@@ -38,7 +38,7 @@ function ToggleSwitch({ on }: { on: boolean }) {
       style={{
         width: "4.5rem",
         height: "2.5rem",
-        background: on ? "#22D3EE" : "rgba(255,255,255,0.15)",
+        background: on ? "#00D4FF" : "rgba(255,255,255,0.15)",
       }}
     >
       <div
@@ -154,8 +154,8 @@ export default function SetupScreen({
                     onClick={() => setConfig((c) => ({ ...c, cameraView: view }))}
                     className="flex flex-col items-center justify-center rounded-2xl py-6 gap-3 active:scale-95 transition-all"
                     style={{
-                      border: `2px solid ${sel ? "#22D3EE" : "rgba(255,255,255,0.1)"}`,
-                      background: sel ? "rgba(34,211,238,0.08)" : "rgba(255,255,255,0.03)",
+                      border: `2px solid ${sel ? "#00D4FF" : "rgba(255,255,255,0.1)"}`,
+                      background: sel ? "rgba(0,212,255,0.08)" : "rgba(255,255,255,0.03)",
                     }}
                   >
                     <span style={{ fontSize: "6rem", lineHeight: 1 }}>
@@ -163,7 +163,7 @@ export default function SetupScreen({
                     </span>
                     <span
                       className="font-black uppercase tracking-wider"
-                      style={{ fontSize: "2rem", color: sel ? "#22D3EE" : "rgba(255,255,255,0.8)" }}
+                      style={{ fontSize: "2rem", color: sel ? "#00D4FF" : "rgba(255,255,255,0.8)" }}
                     >
                       {view === "front" ? "FRONT" : "SIDE"}
                     </span>
@@ -186,8 +186,8 @@ export default function SetupScreen({
                       onClick={() => setConfig((c) => ({ ...c, variant: v }))}
                       className="flex flex-col items-center justify-center rounded-2xl py-5 gap-2 active:scale-95 transition-all"
                       style={{
-                        border: `2px solid ${sel ? "#22D3EE" : "rgba(255,255,255,0.1)"}`,
-                        background: sel ? "rgba(34,211,238,0.08)" : "rgba(255,255,255,0.03)",
+                        border: `2px solid ${sel ? "#00D4FF" : "rgba(255,255,255,0.1)"}`,
+                        background: sel ? "rgba(0,212,255,0.08)" : "rgba(255,255,255,0.03)",
                       }}
                     >
                       <span style={{ fontSize: "4rem", lineHeight: 1 }}>
@@ -195,7 +195,7 @@ export default function SetupScreen({
                       </span>
                       <span
                         className="font-black uppercase tracking-widest text-center"
-                        style={{ fontSize: "1.75rem", color: sel ? "#22D3EE" : "rgba(255,255,255,0.8)" }}
+                        style={{ fontSize: "1.75rem", color: sel ? "#00D4FF" : "rgba(255,255,255,0.8)" }}
                       >
                         {v === "left-forward" ? "LEFT" : "RIGHT"}
                       </span>
@@ -251,8 +251,8 @@ export default function SetupScreen({
                     onClick={() => setConfig((c) => ({ ...c, dominantHand: hand }))}
                     className="flex flex-col items-center justify-center rounded-2xl py-5 gap-2 active:scale-95 transition-all"
                     style={{
-                      border: `2px solid ${sel ? "#22D3EE" : "rgba(255,255,255,0.1)"}`,
-                      background: sel ? "rgba(34,211,238,0.08)" : "rgba(255,255,255,0.03)",
+                      border: `2px solid ${sel ? "#00D4FF" : "rgba(255,255,255,0.1)"}`,
+                      background: sel ? "rgba(0,212,255,0.08)" : "rgba(255,255,255,0.03)",
                     }}
                   >
                     <span style={{ fontSize: "4rem", lineHeight: 1 }}>
@@ -260,7 +260,7 @@ export default function SetupScreen({
                     </span>
                     <span
                       className="font-black uppercase tracking-wider"
-                      style={{ fontSize: "2rem", color: sel ? "#22D3EE" : "rgba(255,255,255,0.8)" }}
+                      style={{ fontSize: "2rem", color: sel ? "#00D4FF" : "rgba(255,255,255,0.8)" }}
                     >
                       {hand.toUpperCase()}
                     </span>
@@ -272,8 +272,8 @@ export default function SetupScreen({
 
           {/* Voice hint */}
           {config.voiceEnabled && (
-            <div className="rounded-2xl border border-[#22D3EE]/20 bg-[#22D3EE]/5 px-6 py-4">
-              <p className="font-semibold text-[#22D3EE]" style={{ fontSize: "1.75rem" }}>
+            <div className="rounded-2xl border border-[#00D4FF]/20 bg-[#00D4FF]/5 px-6 py-4">
+              <p className="font-semibold text-[#00D4FF]" style={{ fontSize: "1.75rem" }}>
                 Voice: &quot;Score me&quot; · &quot;Switch view&quot; · &quot;Repeat&quot; · &quot;Exit&quot;
               </p>
             </div>
@@ -290,7 +290,7 @@ export default function SetupScreen({
           style={{
             height: "6rem",
             fontSize: "3rem",
-            background: handsConfirmed ? "#22D3EE" : "#1E293B",
+            background: handsConfirmed ? "#00D4FF" : "#1E293B",
             color: handsConfirmed ? "#000000" : "rgba(255,255,255,0.25)",
             cursor: handsConfirmed ? "pointer" : "default",
           }}

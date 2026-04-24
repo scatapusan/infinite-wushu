@@ -21,13 +21,13 @@ type Props = {
 };
 
 const DOT_CLASS = {
-  green: "bg-[#22c55e]",
+  green: "bg-[#00FF88]",
   yellow: "bg-gold",
   red: "bg-crimson",
 } as const;
 
 const TEXT_CLASS = {
-  green: "text-[#22c55e]",
+  green: "text-[#00FF88]",
   yellow: "text-gold",
   red: "text-crimson",
 } as const;
@@ -88,7 +88,7 @@ export default function FeedbackPanel({
               <button
                 type="button"
                 onClick={() => setShowPassing((v) => !v)}
-                className="text-[11px] text-[#22c55e]/80 hover:text-[#22c55e] transition-colors"
+                className="text-[11px] text-[#00FF88]/80 hover:text-[#00FF88] transition-colors"
               >
                 {showPassing
                   ? `Hide ${passing.length} passing`
@@ -103,11 +103,11 @@ export default function FeedbackPanel({
                     key={c.id}
                     className="flex items-center gap-2.5 text-xs leading-tight"
                   >
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#00FF88]" />
                     <span className="w-28 text-foreground/50 truncate">
                       {c.label}
                     </span>
-                    <span className="font-mono text-[#22c55e]/80">
+                    <span className="font-mono text-[#00FF88]/80">
                       {c.value ?? "—"}
                     </span>
                   </li>

@@ -165,7 +165,7 @@ export default function FormCompleteScreen({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           <button
             onClick={onRestart}
-            className="rounded-3xl bg-[#22D3EE] font-black uppercase tracking-widest text-black active:scale-[0.97]"
+            className="rounded-3xl bg-[#00D4FF] font-black uppercase tracking-widest text-black active:scale-[0.97]"
             style={{ height: "5.5rem", fontSize: "2rem" }}
           >
             Practice Again
