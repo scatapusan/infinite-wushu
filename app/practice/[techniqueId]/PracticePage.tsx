@@ -17,7 +17,7 @@ import type {
 } from "@/lib/pose/types";
 import { usePoseDetection } from "@/lib/pose/use-pose-detection";
 import { useHandDetection } from "@/lib/pose/use-hand-detection";
-import { STANCE_CHECKS } from "@/lib/pose/stance-checks";
+import { resolveStanceCheck } from "@/lib/pose/technique-lookup";
 import { evaluateStanceFrame, combineViews } from "@/lib/pose/pose-evaluator";
 import { evaluateHands } from "@/lib/pose/hand-evaluator";
 import { checkBodyVisibility } from "@/lib/pose/angle-utils";
@@ -72,7 +72,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pose = usePoseDetection();
-  const config = STANCE_CHECKS[technique.id] ?? null;
+  const { config, scoringId } = resolveStanceCheck(technique.id);
 
   // ── Setup phase ─────────────────────────────────────────────────
   const [practiceStarted, setPracticeStarted] = useState(false);
@@ -240,7 +240,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
 
     // Variant lock
     if (!variantLockedRef.current) {
-      const detected = classifyVariant(pose.landmarks, technique.id);
+      const detected = classifyVariant(pose.landmarks, scoringId);
       if (detected) {
         setVariant(detected);
         variantLockedRef.current = true;
@@ -296,7 +296,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
     bufferPush,
     bufferReset,
     variant,
-    technique.id,
+    scoringId,
     practiceStarted,
     router,
   ]);
@@ -312,7 +312,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
     if (state.phase !== "results") return;
     const mode: "quick" | "multi" = plan.length === 1 ? "quick" : "multi";
     const combined: CombinedEvaluation = combineViews(
-      technique.id,
+      scoringId,
       state.captures.front,
       state.captures.side,
       mode,
@@ -330,26 +330,26 @@ export default function PracticePage({ technique, lessonId }: Props) {
       verified: combined.verified,
       mode: combined.mode,
     });
-  }, [state.phase, state.captures, plan.length, technique.id]);
+  }, [state.phase, state.captures, plan.length, technique.id, scoringId]);
 
   const finalResult: CombinedEvaluation | null = useMemo(() => {
     if (state.phase !== "results") return null;
     const mode: "quick" | "multi" = plan.length === 1 ? "quick" : "multi";
     return combineViews(
-      technique.id,
+      scoringId,
       state.captures.front,
       state.captures.side,
       mode,
     );
-  }, [state.phase, state.captures, plan.length, technique.id]);
+  }, [state.phase, state.captures, plan.length, scoringId]);
 
   const activeReference = useMemo(() => {
     if (!showRef || !config) return null;
     if (state.currentView !== config.primaryView) return null;
-    return getReferenceSkeleton(technique.id, variant);
-  }, [showRef, config, state.currentView, technique.id, variant]);
+    return getReferenceSkeleton(scoringId, variant);
+  }, [showRef, config, state.currentView, scoringId, variant]);
 
-  const isAsymmetric = technique.id !== "horse-stance";
+  const isAsymmetric = scoringId !== "horse-stance";
 
   function handleRetry() {
     bestScoreRef.current = 0;

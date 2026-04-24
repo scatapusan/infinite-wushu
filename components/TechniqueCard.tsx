@@ -30,8 +30,8 @@ export default function TechniqueCard({ technique: t, backHref }: Props) {
         </p>
       </header>
 
-      {/* Demo video / placeholder */}
-      <VideoPlayer videoUrl={t.video_url} title={t.english} />
+      {/* Demo video — omitted when no video is available yet */}
+      {t.video_url && <VideoPlayer videoUrl={t.video_url} title={t.english} />}
 
       {/* Description */}
       {t.description && (

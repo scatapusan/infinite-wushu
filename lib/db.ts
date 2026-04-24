@@ -137,7 +137,19 @@ function deriveLessonStatuses(
       const row = progressMap[l.id];
       let status: LessonStatus;
 
-      if (row?.status === "completed") {
+      // wubuquan is always available — it's the entry point to forms and has
+      // no enforced prerequisite. Other lessons follow the standard linear chain.
+      if (l.id === "wubuquan") {
+        status = row?.status === "completed"
+          ? "completed"
+          : row?.status === "in_progress"
+          ? "in_progress"
+          : "available";
+        if (status === "completed") completedCount += 1;
+        // Do NOT flip previousCompleted — the forms module sits after Basics in
+        // sort_order but its own completion still needs to gate changquan-yi-lu.
+        previousCompleted = status === "completed";
+      } else if (row?.status === "completed") {
         status = "completed";
         previousCompleted = true;
         completedCount += 1;
