@@ -53,6 +53,7 @@ import CircularHoldTimer from "@/components/practice/CircularHoldTimer";
 import CorrectionDisplay from "@/components/practice/CorrectionDisplay";
 import SetupScreen from "@/components/practice/SetupScreen";
 import LegClassifierDebugOverlay from "@/components/practice/LegClassifierDebugOverlay";
+import PracticeExitButton from "@/components/practice/PracticeExitButton";
 
 type Props = {
   technique: Technique;
@@ -112,6 +113,10 @@ export default function PracticePage({ technique, lessonId }: Props) {
   const exitGestureRef = useRef(0);
   const switchGestureRef = useRef(0);
   const backHrefRef = useRef("");
+
+  // ── Exit gesture progress (0–1) for visual feedback ──────────────
+  const [exitGestureProgress, setExitGestureProgress] = useState(0);
+  const [exitGestureBoth, setExitGestureBoth] = useState(false);
 
   const plan = useMemo<CameraViewKind[]>(() => {
     if (!config) return ["front"];
@@ -201,37 +206,49 @@ export default function PracticePage({ technique, lessonId }: Props) {
     const rw = pose.landmarks[16];
     const ls = pose.landmarks[11];
     const rs = pose.landmarks[12];
-    const handsOk =
-      (lw?.visibility ?? 0) > 0.5 &&
-      (rw?.visibility ?? 0) > 0.5 &&
-      (ls?.visibility ?? 0) > 0.5 &&
-      (rs?.visibility ?? 0) > 0.5;
+    // Per-side visibility: single-arm gesture works even when one side is occluded
+    const lwOk = (lw?.visibility ?? 0) > 0.5 && (ls?.visibility ?? 0) > 0.5;
+    const rwOk = (rw?.visibility ?? 0) > 0.5 && (rs?.visibility ?? 0) > 0.5;
+    const handsOk = lwOk && rwOk; // still required for arms-crossed (needs both)
 
-    if (handsOk && practiceStarted) {
+    if (practiceStarted) {
       const now = Date.now();
-      // Both wrists above shoulders → exit after 1s
-      const handsAbove = lw.y < ls.y - 0.1 && rw.y < rs.y - 0.1;
-      if (handsAbove) {
+      // Either wrist above its shoulder → exit gesture
+      // Both arms: 1s threshold (clear intent); one arm: 1.5s (avoids accidental)
+      const leftAbove = lwOk && lw.y < ls.y - 0.1;
+      const rightAbove = rwOk && rw.y < rs.y - 0.1;
+      const bothAbove = leftAbove && rightAbove;
+      const eitherAbove = leftAbove || rightAbove;
+
+      if (eitherAbove) {
         if (exitGestureRef.current === 0) exitGestureRef.current = now;
-        else if (now - exitGestureRef.current >= 1000) {
+        const elapsed = now - exitGestureRef.current;
+        const threshold = bothAbove ? 1000 : 1500;
+        setExitGestureProgress(Math.min(elapsed / threshold, 1));
+        setExitGestureBoth(bothAbove);
+        if (elapsed >= threshold) {
           exitGestureRef.current = 0;
+          setExitGestureProgress(0);
           router.push(backHrefRef.current);
           return;
         }
       } else {
+        if (exitGestureRef.current !== 0) setExitGestureProgress(0);
         exitGestureRef.current = 0;
       }
 
-      // Arms crossed (lw.x > rw.x in image space) → capture/switch after 1s
-      const armsCrossed = lw.x > rw.x;
-      if (armsCrossed) {
-        if (switchGestureRef.current === 0) switchGestureRef.current = now;
-        else if (now - switchGestureRef.current >= 1000) {
+      // Arms crossed → capture/score (needs both hands visible)
+      if (handsOk) {
+        const armsCrossed = lw.x > rw.x;
+        if (armsCrossed) {
+          if (switchGestureRef.current === 0) switchGestureRef.current = now;
+          else if (now - switchGestureRef.current >= 1000) {
+            switchGestureRef.current = 0;
+            forceCaptureRef.current();
+          }
+        } else {
           switchGestureRef.current = 0;
-          forceCaptureRef.current();
         }
-      } else {
-        switchGestureRef.current = 0;
       }
     }
 
@@ -518,8 +535,9 @@ export default function PracticePage({ technique, lessonId }: Props) {
             )}
           </div>
 
-          {/* Camera switch + ref/flip (compact, top-right corner) */}
+          {/* Exit + camera controls (top-right column) */}
           <div className="flex flex-col gap-2 flex-shrink-0">
+            <PracticeExitButton onExit={() => router.push(backHrefRef.current)} />
             <button
               onClick={pose.toggleCamera}
               className="h-14 w-14 rounded-2xl border border-white/20 bg-black/50 flex items-center justify-center text-white/70 active:scale-95"
@@ -626,13 +644,32 @@ export default function PracticePage({ technique, lessonId }: Props) {
               </span>
             </div>
           )}
-          {/* Gesture hint */}
-          <p
-            className="font-semibold text-white/30 text-center px-4"
-            style={{ fontSize: "1.75rem" }}
-          >
-            ✋ Arms up 1s = exit · ✖ Cross arms 1s = score
-          </p>
+          {/* Exit gesture progress / idle hint */}
+          {exitGestureProgress >= 0.01 ? (
+            <div className="flex flex-col items-center gap-1.5 w-full max-w-xs px-6">
+              <div
+                className="w-full overflow-hidden rounded-full bg-white/10"
+                style={{ height: "6px" }}
+              >
+                <div
+                  className="h-full rounded-full bg-[#00D4FF]"
+                  style={{ width: `${exitGestureProgress * 100}%` }}
+                />
+              </div>
+              <p className="font-bold text-[#00D4FF] text-center" style={{ fontSize: "1.75rem" }}>
+                ✋ Hold…{" "}
+                {(exitGestureProgress * (exitGestureBoth ? 1.0 : 1.5)).toFixed(1)}s
+                {" "}/ {exitGestureBoth ? "1.0s" : "1.5s"}
+              </p>
+            </div>
+          ) : (
+            <p
+              className="font-semibold text-white/30 text-center px-4"
+              style={{ fontSize: "1.75rem" }}
+            >
+              ✋ Raise arm 1.5s = exit · ✖ Cross arms 1s = score
+            </p>
+          )}
         </div>
       )}
 

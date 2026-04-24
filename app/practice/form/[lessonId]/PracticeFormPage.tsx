@@ -60,6 +60,7 @@ import FormMovementInfoCard from "@/components/practice/FormMovementInfoCard";
 import FormPausedOverlay from "@/components/practice/FormPausedOverlay";
 import FormExitConfirm from "@/components/practice/FormExitConfirm";
 import LegClassifierDebugOverlay from "@/components/practice/LegClassifierDebugOverlay";
+import PracticeExitButton from "@/components/practice/PracticeExitButton";
 
 type Props = {
   meta: FormLessonMeta;
@@ -136,6 +137,10 @@ export default function PracticeFormPage({ meta, movements }: Props) {
   const exitGestureRef = useRef(0);
   const scoreGestureRef = useRef(0);
   const backHrefRef = useRef("");
+
+  // ── Exit gesture progress (0–1) for visual feedback ───────────────
+  const [exitGestureProgress, setExitGestureProgress] = useState(0);
+  const [exitGestureBoth, setExitGestureBoth] = useState(false);
 
   // Read prefs on mount
   useEffect(() => {
@@ -302,19 +307,29 @@ export default function PracticeFormPage({ meta, movements }: Props) {
     const rw = pose.landmarks[16];
     const ls = pose.landmarks[11];
     const rs = pose.landmarks[12];
-    const handsOk =
-      (lw?.visibility ?? 0) > 0.5 &&
-      (rw?.visibility ?? 0) > 0.5 &&
-      (ls?.visibility ?? 0) > 0.5 &&
-      (rs?.visibility ?? 0) > 0.5;
+    // Per-side visibility: single-arm gesture works even when one side is occluded
+    const lwOk = (lw?.visibility ?? 0) > 0.5 && (ls?.visibility ?? 0) > 0.5;
+    const rwOk = (rw?.visibility ?? 0) > 0.5 && (rs?.visibility ?? 0) > 0.5;
+    const handsOk = lwOk && rwOk; // still required for arms-crossed (needs both)
 
-    if (handsOk && state.phase !== "setup" && state.phase !== "aborted") {
+    if (state.phase !== "setup" && state.phase !== "aborted") {
       const now = Date.now();
-      const handsAbove = lw.y < ls.y - 0.1 && rw.y < rs.y - 0.1;
-      if (handsAbove) {
+      // Either wrist above its shoulder → exit/advance gesture
+      // Both arms: 1s threshold; one arm: 1.5s (avoids accidental triggers)
+      const leftAbove = lwOk && lw.y < ls.y - 0.1;
+      const rightAbove = rwOk && rw.y < rs.y - 0.1;
+      const bothAbove = leftAbove && rightAbove;
+      const eitherAbove = leftAbove || rightAbove;
+
+      if (eitherAbove) {
         if (exitGestureRef.current === 0) exitGestureRef.current = now;
-        else if (now - exitGestureRef.current >= 1000) {
+        const elapsed = now - exitGestureRef.current;
+        const threshold = bothAbove ? 1000 : 1500;
+        setExitGestureProgress(Math.min(elapsed / threshold, 1));
+        setExitGestureBoth(bothAbove);
+        if (elapsed >= threshold) {
           exitGestureRef.current = 0;
+          setExitGestureProgress(0);
           if (state.phase === "intro" || state.phase === "transition") {
             advanceNowRef.current();
           } else {
@@ -323,28 +338,31 @@ export default function PracticeFormPage({ meta, movements }: Props) {
           return;
         }
       } else {
+        if (exitGestureRef.current !== 0) setExitGestureProgress(0);
         exitGestureRef.current = 0;
       }
 
-      // Arms crossed → score / skip countdown
-      const armsCrossed = lw.x > rw.x;
-      if (armsCrossed) {
-        if (scoreGestureRef.current === 0) scoreGestureRef.current = now;
-        else if (now - scoreGestureRef.current >= 1000) {
-          scoreGestureRef.current = 0;
-          if (state.phase === "practicing" && currentMovement?.stanceRef) {
-            forceScoreRef.current();
-          } else if (
-            state.phase === "intro" ||
-            state.phase === "transition" ||
-            state.phase === "movement-complete" ||
-            state.phase === "movement-skipped"
-          ) {
-            advanceNowRef.current();
+      // Arms crossed → score / advance (needs both hands visible)
+      if (handsOk) {
+        const armsCrossed = lw.x > rw.x;
+        if (armsCrossed) {
+          if (scoreGestureRef.current === 0) scoreGestureRef.current = now;
+          else if (now - scoreGestureRef.current >= 1000) {
+            scoreGestureRef.current = 0;
+            if (state.phase === "practicing" && currentMovement?.stanceRef) {
+              forceScoreRef.current();
+            } else if (
+              state.phase === "intro" ||
+              state.phase === "transition" ||
+              state.phase === "movement-complete" ||
+              state.phase === "movement-skipped"
+            ) {
+              advanceNowRef.current();
+            }
           }
+        } else {
+          scoreGestureRef.current = 0;
         }
-      } else {
-        scoreGestureRef.current = 0;
       }
     }
 
@@ -625,14 +643,7 @@ export default function PracticeFormPage({ meta, movements }: Props) {
             >
               MOVEMENT {state.currentMovementIndex + 1} OF {totalMovements}
             </p>
-            <button
-              onClick={() => requestExitRef.current()}
-              className="h-12 rounded-2xl border border-white/20 bg-black/50 px-4 font-bold text-white/70 active:scale-95"
-              style={{ fontSize: "1.75rem" }}
-              aria-label="Exit form"
-            >
-              EXIT
-            </button>
+            <PracticeExitButton onExit={() => requestExitRef.current()} />
           </div>
           {/* Mini progress bar */}
           <div className="flex gap-1">
@@ -772,6 +783,26 @@ export default function PracticeFormPage({ meta, movements }: Props) {
               Skip this movement?
             </button>
           )}
+        </div>
+      )}
+
+      {/* Exit gesture progress — shown whenever the raise-arm gesture is active */}
+      {exitGestureProgress >= 0.01 && (
+        <div className="absolute bottom-36 inset-x-0 z-20 flex flex-col items-center gap-1.5 pointer-events-none px-8">
+          <div
+            className="w-full max-w-sm overflow-hidden rounded-full bg-white/10"
+            style={{ height: "6px" }}
+          >
+            <div
+              className="h-full rounded-full bg-[#00D4FF]"
+              style={{ width: `${exitGestureProgress * 100}%` }}
+            />
+          </div>
+          <p className="font-bold text-[#00D4FF] text-center" style={{ fontSize: "1.75rem" }}>
+            ✋ Hold…{" "}
+            {(exitGestureProgress * (exitGestureBoth ? 1.0 : 1.5)).toFixed(1)}s
+            {" "}/ {exitGestureBoth ? "1.0s" : "1.5s"}
+          </p>
         </div>
       )}
 
