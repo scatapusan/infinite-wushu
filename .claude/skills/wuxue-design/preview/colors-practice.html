@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Practice Palette</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #050B1A; font-family: var(--font-sans); }
+  .wrap { padding: 20px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .sw { border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); }
+  .chip { height: 70px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 28px; }
+  .meta { padding: 8px 12px; }
+  .name { font-size: 11px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.15em; }
+  .hex { font-size: 11px; font-family: ui-monospace, monospace; color: rgba(255,255,255,0.55); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sw">
+    <div class="chip" style="background:#050B1A; color:#fff; border-bottom:1px solid rgba(255,255,255,0.08);">BG</div>
+    <div class="meta"><div class="name">Practice BG</div><div class="hex">#050B1A</div></div>
+  </div>
+  <div class="sw">
+    <div class="chip" style="background:#00FF88; color:#050B1A;">85</div>
+    <div class="meta"><div class="name">Pass</div><div class="hex">#00FF88</div></div>
+  </div>
+  <div class="sw">
+    <div class="chip" style="background:#FFD700; color:#050B1A;">60</div>
+    <div class="meta"><div class="name">Warn</div><div class="hex">#FFD700</div></div>
+  </div>
+  <div class="sw">
+    <div class="chip" style="background:#FF3355; color:#fff;">30</div>
+    <div class="meta"><div class="name">Fail</div><div class="hex">#FF3355</div></div>
+  </div>
+  <div class="sw">
+    <div class="chip" style="background:#00D4FF; color:#050B1A;">REF</div>
+    <div class="meta"><div class="name">Reference</div><div class="hex">#00D4FF</div></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Spacing & Radii</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(var(--background)); font-family: var(--font-sans); }
+  .wrap { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  h4 { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: rgb(var(--cyan) / 0.7); margin: 0 0 12px; }
+  .radrow { display: flex; align-items: center; gap: 10px; }
+  .radchip { background: #0d1328; border: 1px solid rgba(0,180,230,0.2); height: 42px; display: flex; align-items: center; justify-content: center; color: var(--fg-2); font-size: 10px; font-family: ui-monospace, monospace; padding: 0 10px; }
+  .spacerow { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .sp { background: rgba(0,180,230,0.3); height: 8px; }
+  .sp-l { font-size: 10px; color: var(--fg-3); font-family: ui-monospace, monospace; width: 44px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h4>Radii</h4>
+    <div class="radrow">
+      <div class="radchip" style="border-radius: 10px; width: 60px;">10</div>
+      <div class="radchip" style="border-radius: 12px; width: 60px;">12</div>
+      <div class="radchip" style="border-radius: 16px; width: 60px;">16</div>
+      <div class="radchip" style="border-radius: 20px; width: 60px;">20</div>
+      <div class="radchip" style="border-radius: 999px; width: 42px;">∞</div>
+    </div>
+  </div>
+  <div>
+    <h4>Spacing scale</h4>
+    <div class="spacerow"><span class="sp-l">sp-2</span><div class="sp" style="width: 8px;"></div><span class="sp-l" style="color: var(--fg-4);">8</span></div>
+    <div class="spacerow"><span class="sp-l">sp-4</span><div class="sp" style="width: 16px;"></div><span class="sp-l" style="color: var(--fg-4);">16</span></div>
+    <div class="spacerow"><span class="sp-l">sp-6</span><div class="sp" style="width: 24px;"></div><span class="sp-l" style="color: var(--fg-4);">24</span></div>
+    <div class="spacerow"><span class="sp-l">sp-8</span><div class="sp" style="width: 32px;"></div><span class="sp-l" style="color: var(--fg-4);">32</span></div>
+    <div class="spacerow"><span class="sp-l">sp-12</span><div class="sp" style="width: 48px;"></div><span class="sp-l" style="color: var(--fg-4);">48</span></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Semantic Text Colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(var(--background)); font-family: var(--font-sans); }
+  .wrap { padding: 22px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .row { display: grid; grid-template-columns: 120px 1fr 120px; align-items: center; gap: 16px; }
+  .label { font-size: 13px; font-weight: 600; font-family: ui-monospace, monospace; color: var(--fg-3); }
+  .sample { font-size: 15px; font-weight: 500; }
+  .token { font-size: 11px; font-family: ui-monospace, monospace; color: var(--fg-4); text-align: right; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><span class="label">fg-1</span><span class="sample" style="color: var(--fg-1);">Primary body — 100%</span><span class="token">#E0EAF0</span></div>
+  <div class="row"><span class="label">fg-2</span><span class="sample" style="color: var(--fg-2);">Secondary — 80%</span><span class="token">0.80</span></div>
+  <div class="row"><span class="label">fg-3</span><span class="sample" style="color: var(--fg-3);">Tertiary · help text — 60%</span><span class="token">0.60</span></div>
+  <div class="row"><span class="label">fg-4</span><span class="sample" style="color: var(--fg-4);">Quaternary · hints — 40%</span><span class="token">0.40</span></div>
+  <div class="row"><span class="label">fg-5</span><span class="sample" style="color: var(--fg-5);">Lowest · footer fine print — 30%</span><span class="token">0.30</span></div>
+  <div class="row"><span class="label">cyan</span><span class="sample" style="color: var(--accent-cyan); font-weight: 700;">Active · link · WuXue</span><span class="token">#00B4E6</span></div>
+  <div class="row"><span class="label">gold</span><span class="sample" style="font-family: var(--font-chinese); color: var(--accent-gold); font-weight: 700;">武学 · Chinese only</span><span class="token">#D4A030</span></div>
+  <div class="row"><span class="label">crimson</span><span class="sample" style="color: var(--danger); font-weight: 700;">Error · destructive</span><span class="token">#E85D4A</span></div>
+</div>
+</body>
+</html>

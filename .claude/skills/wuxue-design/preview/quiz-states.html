@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Quiz Answer States</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(var(--background)); font-family: var(--font-sans); }
+  .wrap { padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .opt { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid; font-size: 14px; font-family: inherit; cursor: pointer; width: 100%; box-sizing: border-box; }
+  .bg { width: 22px; height: 22px; border-radius: 999px; border: 1px solid currentColor; display:inline-flex; align-items:center; justify-content:center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .opt.idle { border-color: rgba(255,255,255,0.1); color: rgba(224,234,240,0.8); background: transparent; }
+  .opt.sel { border-color: rgba(0,180,230,0.6); color: var(--fg-1); background: rgba(0,180,230,0.05); }
+  .opt.correct { border-color: rgba(0,180,230,0.6); color: var(--accent-cyan); background: rgba(0,180,230,0.1); }
+  .opt.wrong { border-color: rgba(232,93,74,0.6); color: var(--danger); background: rgba(232,93,74,0.1); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button class="opt idle"><span class="bg">A</span>Horse Stance (mǎbù)</button>
+  <button class="opt sel"><span class="bg">B</span>Bow Stance (gōngbù)</button>
+  <button class="opt correct"><span class="bg">✓</span>Empty Stance (xūbù)</button>
+  <button class="opt wrong"><span class="bg">✕</span>Crouch Stance (púbù)</button>
+</div>
+</body>
+</html>

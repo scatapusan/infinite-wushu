@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Module Card</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(var(--background)); font-family: var(--font-sans); }
+  .wrap { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { background: #0d1328; border: 1px solid rgba(0,180,230,0.12); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .eb { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: rgb(var(--cyan) / 0.6); }
+  .title { font-size: 16px; font-weight: 700; color: var(--fg-1); margin-top: 4px; }
+  .bili { font-size: 13px; margin-top: 2px; }
+  .py { font-style: italic; color: var(--fg-3); }
+  .zh { font-family: var(--font-chinese); color: rgba(212,160,48,0.8); margin-left: 8px; font-weight: 700; }
+  .bar-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--fg-3); }
+  .pct { color: var(--accent-cyan); font-weight: 600; }
+  .bar { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .fill { height: 100%; background: linear-gradient(90deg, #00b4e6, #d4a030); }
+  .lock { position: absolute; right: 16px; top: 16px; color: rgba(224,234,240,0.5); }
+  .card.locked { opacity: 0.5; position: relative; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div>
+      <div class="eb">Foundation</div>
+      <div class="title">Basic Stances</div>
+      <div class="bili"><span class="py">Bùxíng</span><span class="zh">步型</span></div>
+    </div>
+    <div>
+      <div class="bar-row"><span>3 / 5 lessons</span><span class="pct">60%</span></div>
+      <div class="bar"><div class="fill" style="width: 60%;"></div></div>
+    </div>
+  </div>
+  <div class="card locked">
+    <svg class="lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <div>
+      <div class="eb">Forms</div>
+      <div class="title">Five-Step Fist</div>
+      <div class="bili"><span class="py">Wǔbùquán</span><span class="zh">五步拳</span></div>
+    </div>
+    <div>
+      <div class="bar-row"><span>0 / 8 lessons</span><span class="pct">0%</span></div>
+      <div class="bar"><div class="fill" style="width: 0%;"></div></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

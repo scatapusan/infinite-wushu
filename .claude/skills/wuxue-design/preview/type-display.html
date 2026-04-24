@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Type Display</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(var(--background)); font-family: var(--font-sans); }
+  .wrap { padding: 24px 28px; display: flex; flex-direction: column; gap: 12px; }
+  .row { display: flex; align-items: baseline; gap: 14px; }
+  .meta { font-size: 10px; color: var(--fg-4); font-family: ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.1em; width: 130px; flex-shrink: 0; }
+  .t { color: var(--fg-1); line-height: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><span class="meta">Hero · 60px · 700</span><span class="t" style="font-family: var(--font-chinese); font-size: 60px; font-weight: 700; color: var(--accent-gold);">武学</span></div>
+  <div class="row"><span class="meta">H1 · 36px · 700</span><span class="t" style="font-size: 36px; font-weight: 700;">Learn Wushu, step by step.</span></div>
+  <div class="row"><span class="meta">H2 · 24px · 700</span><span class="t" style="font-size: 24px; font-weight: 700;">Continue learning</span></div>
+</div>
+</body>
+</html>

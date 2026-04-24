@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(var(--background)); font-family: var(--font-sans); }
+  .wrap { padding: 22px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  button { font-family: inherit; border: none; cursor: pointer; }
+  .tag { font-size: 10px; color: var(--fg-4); text-transform: uppercase; letter-spacing: 0.15em; font-family: ui-monospace, monospace; width: 100%; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button class="btn-primary">Create account</button>
+  <button class="btn-ghost">Sign in</button>
+  <button class="btn-crimson">Retry</button>
+  <button class="btn-primary" disabled style="opacity: 0.5;">Signing in…</button>
+  <button class="btn-primary" style="padding: 14px 24px; font-size: 16px;">
+    <span style="display:inline-flex; align-items:center; gap: 8px;">Resume <span>→</span></span>
+  </button>
+  <div class="tag">btn-primary (cyan) · btn-ghost (outlined) · btn-crimson (destructive) · disabled · with icon</div>
+</div>
+</body>
+</html>

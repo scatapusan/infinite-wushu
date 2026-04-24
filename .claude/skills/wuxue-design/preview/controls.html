@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Toggle & Pills</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(var(--background)); font-family: var(--font-sans); }
+  .wrap { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; align-items: center; gap: 14px; }
+  .lab { font-size: 13px; font-weight: 600; color: var(--fg-2); min-width: 140px; }
+  .tog { height: 28px; width: 48px; border-radius: 999px; position: relative; cursor: pointer; }
+  .tog .knob { position: absolute; top: 3px; height: 22px; width: 22px; border-radius: 999px; background: #fff; transition: left 0.15s; }
+  .tog.on { background: rgb(var(--cyan)); } .tog.on .knob { left: 23px; }
+  .tog.off { background: rgba(224,234,240,0.2); } .tog.off .knob { left: 3px; }
+  .tog.gold.on { background: rgb(var(--gold)); }
+  .seg { display: inline-flex; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 4px; background: rgba(255,255,255,0.02); gap: 2px; }
+  .seg button { background: transparent; border: none; padding: 8px 14px; border-radius: 10px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--fg-3); cursor: pointer; }
+  .seg button.active { background: rgba(0,180,230,0.15); color: var(--accent-cyan); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid; }
+  .chip.coach { color: var(--accent-gold); border-color: rgba(212,160,48,0.4); background: rgba(212,160,48,0.1); text-transform: uppercase; letter-spacing: 0.15em; }
+  .chip.verified { color: #22c55e; border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.1); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row">
+    <span class="lab">Toggles</span>
+    <div class="tog on"><div class="knob"></div></div>
+    <div class="tog off"><div class="knob"></div></div>
+    <div class="tog gold on"><div class="knob"></div></div>
+  </div>
+  <div class="row">
+    <span class="lab">Segmented</span>
+    <div class="seg">
+      <button class="active">Full</button>
+      <button>Characters</button>
+      <button>Pinyin</button>
+      <button>English</button>
+    </div>
+  </div>
+  <div class="row">
+    <span class="lab">Chips</span>
+    <span class="chip coach">Coach View</span>
+    <span class="chip verified">✓ Verified</span>
+  </div>
+</div>
+</body>
+</html>

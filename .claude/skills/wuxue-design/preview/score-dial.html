@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WuXue — Score Dial</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #050B1A; font-family: var(--font-sans); }
+  .wrap { padding: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; place-items: center; }
+  .dial { position: relative; width: 130px; height: 130px; display:flex; align-items:center; justify-content:center; }
+  .dial svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .score { font-weight: 900; font-size: 48px; line-height: 1; }
+  .lab { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .box { display:flex; flex-direction:column; align-items:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="box">
+    <div class="dial">
+      <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/><circle cx="60" cy="60" r="54" fill="none" stroke="#00FF88" stroke-width="8" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="50"/></svg>
+      <div style="text-align:center;"><div class="score" style="color:#00FF88; text-shadow:0 0 20px #00FF8855;">85</div><div class="lab">Official</div></div>
+    </div>
+  </div>
+  <div class="box">
+    <div class="dial">
+      <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/><circle cx="60" cy="60" r="54" fill="none" stroke="#FFD700" stroke-width="8" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="180"/></svg>
+      <div style="text-align:center;"><div class="score" style="color:#FFD700; text-shadow:0 0 20px #FFD70055;">58</div><div class="lab">1.2s</div></div>
+    </div>
+  </div>
+  <div class="box">
+    <div class="dial">
+      <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/><circle cx="60" cy="60" r="54" fill="none" stroke="#FF3355" stroke-width="8" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="300"/></svg>
+      <div style="text-align:center;"><div class="score" style="color:#FF3355; text-shadow:0 0 20px #FF335555;">32</div><div class="lab">0.3s</div></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
