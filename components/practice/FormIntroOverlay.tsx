@@ -73,7 +73,7 @@ export default function FormIntroOverlay({
         <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-white/5 p-6 space-y-2">
           <p
             className="font-bold uppercase tracking-widest text-white/50"
-            style={{ fontSize: "1.5rem" }}
+            style={{ fontSize: "1.75rem" }}
           >
             Starting with movement 1
           </p>

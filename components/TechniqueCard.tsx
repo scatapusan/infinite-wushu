@@ -45,7 +45,7 @@ export default function TechniqueCard({ technique: t, backHref }: Props) {
         <div>
           <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-cyan">
             <Check size={14} />
-            Key Points
+            Key points
           </h3>
           <ul className="space-y-1.5">
             {t.key_points.map((point, i) => (
@@ -66,7 +66,7 @@ export default function TechniqueCard({ technique: t, backHref }: Props) {
         <div className="rounded-card-md border border-crimson/25 bg-crimson/5 p-4">
           <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-crimson">
             <AlertTriangle size={14} />
-            Common Mistakes
+            Common mistakes
           </h3>
           <ul className="space-y-1.5">
             {t.common_mistakes.map((mistake, i) => (
@@ -92,7 +92,7 @@ export default function TechniqueCard({ technique: t, backHref }: Props) {
           className="btn-gold flex w-full items-center justify-center gap-2"
         >
           <Camera size={14} />
-          Practice This Stance
+          Practice this stance
         </Link>
       )}
     </article>

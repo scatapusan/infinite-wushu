@@ -520,7 +520,7 @@ export default function PracticePage({ technique, lessonId }: Props) {
           {/* Perspective + step indicator */}
           <div className="flex-shrink-0 text-right">
             <p
-              className="font-black uppercase text-[#00D4FF] leading-none"
+              className="font-black uppercase tracking-wider text-[#00D4FF] leading-none"
               style={{ fontSize: "2.5rem" }}
             >
               {state.currentView === "front" ? "FRONT" : "SIDE"}

@@ -39,19 +39,20 @@ export default function CountdownOverlay({
         className="text-cyan"
       />
       <div className="text-center">
-        <p className="text-sm uppercase tracking-widest text-foreground/60">
+        <p className="uppercase tracking-widest text-foreground/60" style={{ fontSize: "1.75rem" }}>
           {instruction}
         </p>
         <p className="mt-2 text-7xl font-bold text-cyan tabular-nums">
           {secondsLeft}
         </p>
-        <p className="mt-1 text-xs text-foreground/40">
+        <p className="mt-1 text-foreground/40" style={{ fontSize: "1.75rem" }}>
           Get into position…
         </p>
       </div>
       <button
         onClick={onDone}
-        className="text-xs text-foreground/50 underline hover:text-foreground transition"
+        className="text-foreground/50 underline hover:text-foreground transition"
+        style={{ fontSize: "1.75rem" }}
       >
         Skip countdown
       </button>

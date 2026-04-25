@@ -73,7 +73,7 @@ export default function FormCompleteScreen({
             className="font-bold uppercase tracking-widest text-white/50"
             style={{ fontSize: "1.75rem" }}
           >
-            Total Score
+            Total score
           </p>
           <p
             className="font-black tabular-nums"
@@ -100,7 +100,7 @@ export default function FormCompleteScreen({
             className="font-bold uppercase tracking-widest text-white/50"
             style={{ fontSize: "1.75rem" }}
           >
-            Movement Breakdown
+            Movement breakdown
           </p>
           <div className="rounded-3xl border border-white/10 bg-white/5 divide-y divide-white/10">
             {movements.map((m, i) => {
@@ -168,14 +168,14 @@ export default function FormCompleteScreen({
             className="rounded-3xl bg-[#00D4FF] font-black uppercase tracking-widest text-black active:scale-[0.97]"
             style={{ height: "5.5rem", fontSize: "2rem" }}
           >
-            Practice Again
+            Practice again
           </button>
           <Link
             href={backHref}
             className="rounded-3xl border border-white/20 bg-white/5 flex items-center justify-center font-bold text-white/80 active:scale-[0.97]"
             style={{ height: "5.5rem", fontSize: "2rem" }}
           >
-            Exit to Lessons
+            Exit to lessons
           </Link>
         </div>
       </div>

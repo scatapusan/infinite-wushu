@@ -4,7 +4,7 @@ export default function Loading() {
       <p className="font-chinese text-5xl font-bold text-gold opacity-60">
         武学
       </p>
-      <p className="mt-4 text-xs uppercase tracking-[0.3em] text-gold/40">
+      <p className="mt-4 text-xs uppercase tracking-[0.3em] text-foreground/40">
         Loading…
       </p>
     </main>

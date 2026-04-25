@@ -5,7 +5,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 function scoreColor(score: number): string {
   if (score >= 70) return "#00FF88";
-  if (score >= 40) return "#d4a030";
+  if (score >= 40) return "#FFD700";
   return "#e85d4a";
 }
 

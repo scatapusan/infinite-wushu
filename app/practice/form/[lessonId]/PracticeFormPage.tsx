@@ -684,7 +684,7 @@ export default function PracticeFormPage({ meta, movements }: Props) {
               </p>
               <p
                 className="italic text-white/50 leading-none truncate"
-                style={{ fontSize: "1.5rem" }}
+                style={{ fontSize: "1.75rem" }}
               >
                 {currentMovement.pinyin}
               </p>

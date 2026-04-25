@@ -108,7 +108,7 @@ export default function SetupScreen({
               <p className="font-black" style={{ fontSize: "3.5rem", lineHeight: 1 }}>
                 {techniqueName}
               </p>
-              <p className="font-bold text-[#FFD700]" style={{ fontSize: "2.5rem", lineHeight: 1.2 }}>
+              <p className="font-bold font-chinese text-[#FFD700]" style={{ fontSize: "2.5rem", lineHeight: 1.2 }}>
                 {techniqueNameChinese}
               </p>
             </div>
@@ -201,7 +201,7 @@ export default function SetupScreen({
                       </span>
                       <span
                         className="font-semibold uppercase tracking-wider"
-                        style={{ fontSize: "1.25rem", color: "rgba(255,255,255,0.4)" }}
+                        style={{ fontSize: "1.75rem", color: "rgba(255,255,255,0.4)" }}
                       >
                         FORWARD
                       </span>

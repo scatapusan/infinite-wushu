@@ -72,7 +72,7 @@ export default function FormMovementInfoCard({ movement, onContinue }: Props) {
         </button>
         <p
           className="text-center font-semibold text-white/40"
-          style={{ fontSize: "1.5rem" }}
+          style={{ fontSize: "1.75rem" }}
         >
           Or wait — auto-advances in 5s
         </p>

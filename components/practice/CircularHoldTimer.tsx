@@ -114,7 +114,7 @@ export default function CircularHoldTimer({
         {/* Hold label */}
         <span
           className="font-bold tracking-widest uppercase"
-          style={{ fontSize: "1rem", color: "rgba(255,255,255,0.5)", letterSpacing: "0.2em" }}
+          style={{ fontSize: "1.75rem", color: "rgba(255,255,255,0.5)", letterSpacing: "0.2em" }}
         >
           {met ? "OFFICIAL" : `${seconds.toFixed(1)}s`}
         </span>
